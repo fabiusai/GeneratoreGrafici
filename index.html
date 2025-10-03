@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore Grafici</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js for chart generation -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- SheetJS (xlsx) for reading Excel files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Google Fonts: Nunito Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles to match the branding */
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background-color: #f0f2f5; /* Light grey background */
+        }
+        .brand-yellow {
+            background-color: #ffc72c;
+        }
+        .brand-blue {
+            background-color: #0431AE;
+        }
+        .text-brand-blue {
+            color: #0431AE;
+        }
+        .border-brand-blue {
+            border-color: #0431AE;
+        }
+        /* Custom radio button styles */
+        .custom-radio input[type="radio"] {
+            display: none;
+        }
+        .custom-radio label {
+            transition: all 0.2s ease-in-out;
+        }
+        .custom-radio input[type="radio"]:checked + label {
+            border-color: #0431AE;
+            background-color: #e0e7ff;
+            color: #0431AE;
+            font-weight: 700;
+        }
+        /* SVG text selection */
+        svg text {
+             user-select: none;
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <header class="brand-yellow p-4 shadow-md">
+        <h1 class="text-3xl font-bold text-brand-blue text-center">Generatore Grafici</h1>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-4 bg-white p-6 rounded-lg shadow-lg h-fit">
+            
+            <!-- 1. Chart Type Selection -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-brand-blue mb-3">1. Seleziona tipo di grafico</h2>
+                <div class="grid grid-cols-2 gap-4 custom-radio">
+                    <div>
+                        <input type="radio" id="histogram" name="chart_type" value="histogram" checked class="chart-type-selector">
+                        <label for="histogram" class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 text-center block hover:border-blue-400">Istogramma</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="pie_2_colors" name="chart_type" value="pie_2_colors" class="chart-type-selector">
+                        <label for="pie_2_colors" class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 text-center block hover:border-blue-400">Torta 2 Colori</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="pie_multi_color" name="chart_type" value="pie_multi_color" class="chart-type-selector">
+                        <label for="pie_multi_color" class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 text-center block hover:border-blue-400">Torta Multi Colore</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="sentiment_donut" name="chart_type" value="sentiment_donut" class="chart-type-selector">
+                        <label for="sentiment_donut" class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 text-center block hover:border-blue-400">Torta Sentiment</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Data Loading -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold text-brand-blue mb-3">2. Carica i dati</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label for="chart-title" class="block text-sm font-medium text-gray-700 mb-1">Titolo del Grafico</label>
+                        <input type="text" id="chart-title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Es. Interazioni Mensili">
+                    </div>
+                    <div>
+                        <label for="data-paste" class="block text-sm font-medium text-gray-700 mb-1">Incolla dati (Label [TAB] Valore)</label>
+                        <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Gennaio	150&#10;Febbraio	200&#10;Marzo	120"></textarea>
+                    </div>
+                    <div class="text-center text-gray-500">oppure</div>
+                    <div>
+                        <label for="file-upload" class="w-full inline-block text-center px-4 py-2 border border-dashed border-gray-400 rounded-md cursor-pointer hover:bg-gray-50">
+                            <span id="file-label">Carica file Excel (.xlsx)</span>
+                            <input type="file" id="file-upload" class="hidden" accept=".xlsx, .xls">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histogram Specific Options -->
+            <div id="histogram-options" class="mb-6">
+                <h3 class="text-lg font-bold text-brand-blue mb-3">Opzioni Istogramma</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="chart-width" class="block text-sm font-medium text-gray-700">Larghezza (px)</label>
+                        <input type="number" id="chart-width" value="800" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="chart-height" class="block text-sm font-medium text-gray-700">Altezza (px)</label>
+                        <input type="number" id="chart-height" value="500" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                     <div>
+                        <label for="font-size-x" class="block text-sm font-medium text-gray-700">Font Asse X (px)</label>
+                        <input type="number" id="font-size-x" value="12" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label for="font-size-y" class="block text-sm font-medium text-gray-700">Font Asse Y (px)</label>
+                        <input type="number" id="font-size-y" value="10" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                        <label for="sort-by" class="block text-sm font-medium text-gray-700">Ordina per</label>
+                        <select id="sort-by" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="none" selected>Nessun ordine (default)</option>
+                            <option value="label">Etichetta (Col A)</option>
+                            <option value="value">Valore (Col B)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="sort-direction" class="block text-sm font-medium text-gray-700">Direzione</label>
+                        <select id="sort-direction" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="asc">Crescente (A-Z, 0-9)</option>
+                            <option value="desc" selected>Decrescente (Z-A, 9-0)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Chart Generation & Settings -->
+            <div>
+                 <h2 class="text-xl font-bold text-brand-blue mb-3">3. Azioni</h2>
+                 <div class="flex flex-col space-y-3">
+                    <button id="generate-btn" class="w-full brand-blue text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity">
+                        Genera Grafico
+                    </button>
+                    <button id="download-btn" disabled class="w-full bg-gray-400 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed">
+                        Scarica SVG
+                    </button>
+                    <button id="copy-btn" disabled class="w-full bg-gray-400 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed">
+                        Copia Grafico
+                    </button>
+                    <hr class="my-2">
+                    <button id="save-settings-btn" class="w-full bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors">
+                        Salva Impostazioni
+                    </button>
+                    <label for="load-settings-input" class="w-full text-center bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
+                        Carica Impostazioni
+                        <input type="file" id="load-settings-input" class="hidden" accept=".json">
+                    </label>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Chart Preview Column -->
+        <div class="lg:col-span-8 bg-white p-4 md:p-6 rounded-lg shadow-lg flex flex-col items-center justify-center min-h-[500px]">
+            <div id="chart-container" class="w-full h-full flex items-center justify-center">
+                <div class="text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    <p class="mt-2">L'anteprima del grafico apparirà qui.</p>
+                </div>
+            </div>
+             <p id="feedback-message" class="mt-4 text-green-600 font-semibold"></p>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chartTypeSelectors = document.querySelectorAll('.chart-type-selector');
+            const histogramOptions = document.getElementById('histogram-options');
+            const generateBtn = document.getElementById('generate-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const copyBtn = document.getElementById('copy-btn');
+            const saveSettingsBtn = document.getElementById('save-settings-btn');
+            const loadSettingsInput = document.getElementById('load-settings-input');
+            const chartContainer = document.getElementById('chart-container');
+            const fileUpload = document.getElementById('file-upload');
+            const dataPaste = document.getElementById('data-paste');
+            const fileLabel = document.getElementById('file-label');
+            const feedbackMessage = document.getElementById('feedback-message');
+
+            const COLORS = {
+                titleBlue: '#0431AE',
+                barBlue: '#bfd7fd',
+                axisGray: '#7b7b7a',
+                gridGray: '#e0e0e0',
+                sentiment: {
+                    positive: '#28a745', // green
+                    neutral: '#ffc107', // yellow
+                    negative: '#dc3545', // red
+                },
+                multiPie: [
+                    '#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3',
+                    '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'
+                ]
+            };
+
+            // Toggle histogram options visibility
+            chartTypeSelectors.forEach(selector => {
+                selector.addEventListener('change', (e) => {
+                    histogramOptions.style.display = e.target.value === 'histogram' ? 'block' : 'none';
+                });
+            });
+
+            // Handle file upload
+            fileUpload.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                fileLabel.textContent = `Caricato: ${file.name}`;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    const tsvData = jsonData.map(row => row.join('\t')).join('\n');
+                    dataPaste.value = tsvData;
+                };
+                reader.readAsArrayBuffer(file);
+            });
+            
+            // --- DATA PARSING ---
+            function parseData() {
+                const text = dataPaste.value.trim();
+                if (!text) {
+                    alert('Per favore, inserisci dei dati.');
+                    return [];
+                }
+                return text.split('\n').map(line => {
+                    const parts = line.split('\t');
+                    let label = parts[0] || '';
+                    const value = parseFloat(parts[1]) || 0;
+                    
+                    const highlight = label.startsWith('*') && label.endsWith('*');
+                    if (highlight) {
+                        label = label.substring(1, label.length - 1); // Rimuove gli asterischi
+                    }
+
+                    return { label, value, highlight };
+                }).filter(d => d.label && !isNaN(d.value));
+            }
+
+            // --- CHART GENERATION LOGIC ---
+            generateBtn.addEventListener('click', () => {
+                const data = parseData();
+                const chartType = document.querySelector('input[name="chart_type"]:checked').value;
+                const title = document.getElementById('chart-title').value || 'Grafico';
+
+                if (data.length === 0) return;
+                
+                // Sorting logic for histogram
+                if (chartType === 'histogram') {
+                    const sortBy = document.getElementById('sort-by').value;
+                    const sortDirection = document.getElementById('sort-direction').value;
+
+                    if (sortBy !== 'none') {
+                        data.sort((a, b) => {
+                            let comparison = 0;
+                            if (sortBy === 'label') {
+                                comparison = a.label.localeCompare(b.label);
+                            } else { // sortBy === 'value'
+                                comparison = a.value - b.value;
+                            }
+                            return sortDirection === 'asc' ? comparison : -comparison;
+                        });
+                    }
+                }
+
+                showButtonFeedback(generateBtn, 'Generazione...');
+                
+                chartContainer.innerHTML = ''; // Clear previous chart
+                feedbackMessage.textContent = '';
+                
+                setTimeout(() => {
+                    try {
+                        switch (chartType) {
+                            case 'histogram':
+                                const width = +document.getElementById('chart-width').value;
+                                const height = +document.getElementById('chart-height').value;
+                                const fontSizeX = +document.getElementById('font-size-x').value;
+                                const fontSizeY = +document.getElementById('font-size-y').value;
+                                drawHistogram(data, title, width, height, fontSizeX, fontSizeY);
+                                break;
+                            case 'pie_2_colors':
+                                drawPieChart(data, title, [COLORS.titleBlue, COLORS.barBlue], false);
+                                break;
+                            case 'pie_multi_color':
+                                drawPieChart(data, title, COLORS.multiPie, false);
+                                break;
+                            case 'sentiment_donut':
+                                // Ensure specific order for sentiment
+                                const sentimentOrder = ['Positivo', 'Neutro', 'Negativo'];
+                                const sortedData = data.sort((a, b) => sentimentOrder.indexOf(a.label) - sentimentOrder.indexOf(b.label));
+                                const sentimentColors = sortedData.map(d => {
+                                    if(d.label.toLowerCase() === 'positivo') return COLORS.sentiment.positive;
+                                    if(d.label.toLowerCase() === 'neutro') return COLORS.sentiment.neutral;
+                                    if(d.label.toLowerCase() === 'negativo') return COLORS.sentiment.negative;
+                                    return 'gray';
+                                });
+                                drawPieChart(sortedData, title, sentimentColors, true);
+                                break;
+                        }
+                        
+                        enableExportButtons();
+                        showButtonFeedback(generateBtn, 'Fatto!', true);
+                    } catch (error) {
+                         console.error("Errore durante la generazione del grafico:", error);
+                         chartContainer.innerHTML = `<p class="text-red-500">Si è verificato un errore. Controlla i dati e riprova.</p>`;
+                         showButtonFeedback(generateBtn, 'Errore', false, true);
+                    }
+                }, 200); // Small delay for UX
+            });
+            
+            // --- DRAWING FUNCTIONS (D3.js) ---
+
+            function drawCommonTitle(svg, title) {
+                svg.append('text')
+                    .attr('x', 0)
+                    .attr('y', 32)
+                    .attr('font-family', 'Nunito Sans, sans-serif')
+                    .attr('font-size', '32px')
+                    .attr('font-weight', '700')
+                    .attr('fill', COLORS.titleBlue)
+                    .text(title);
+                
+                svg.append('line')
+                    .attr('x1', 0)
+                    .attr('x2', 400) // Fixed length, can be dynamic
+                    .attr('y1', 45)
+                    .attr('y2', 45)
+                    .attr('stroke', COLORS.titleBlue)
+                    .attr('stroke-width', 2);
+            }
+
+            function drawHistogram(data, title, width, height, fontSizeX, fontSizeY) {
+                // Find the longest label to dynamically calculate bottom margin
+                const longestLabel = data.reduce((a, b) => a.label.length > b.label.length ? a : b, {label: ''}).label;
+                const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeX * 0.55); // Heuristic for rotated text
+
+                const margin = { top: 80, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                const innerWidth = width - margin.left - margin.right;
+                const innerHeight = height - margin.top - margin.bottom;
+
+                const svg = d3.select("#chart-container")
+                    .append("svg")
+                    .attr("width", width)
+                    .attr("height", height)
+                    .attr("viewBox", `0 0 ${width} ${height}`)
+                    .style("background-color", "transparent");
+
+                drawCommonTitle(svg, title);
+
+                const g = svg.append("g")
+                    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+                
+                const x = d3.scaleBand()
+                    .domain(data.map(d => d.label))
+                    .range([0, innerWidth])
+                    .padding(0.4);
+
+                const y = d3.scaleLinear()
+                    .domain([0, d3.max(data, d => d.value) * 1.1])
+                    .range([innerHeight, 0]);
+
+                // Y-axis grid lines
+                g.append("g")
+                    .attr("class", "grid")
+                    .call(d3.axisLeft(y)
+                        .ticks(5)
+                        .tickSize(-innerWidth)
+                        .tickFormat("")
+                    )
+                    .selectAll("line")
+                    .attr("stroke", COLORS.gridGray)
+                    .attr("stroke-dasharray", "2,2");
+                g.select(".domain").remove();
+
+                g.append("g")
+                    .attr("transform", `translate(0, ${innerHeight})`)
+                    .call(d3.axisBottom(x))
+                    .selectAll("text")
+                    .style("text-anchor", "end")
+                    .attr("dx", "-.8em")
+                    .attr("dy", ".15em")
+                    .attr("transform", "rotate(-45)")
+                    .style("font-size", `${fontSizeX}px`) // Applied font size
+                    .style("fill", COLORS.axisGray);
+
+                g.append("g")
+                    .call(d3.axisLeft(y).ticks(5))
+                    .style("font-size", `${fontSizeY}px`) // Applied font size
+                    .style("color", COLORS.axisGray);
+
+                // Highlight based on asterisks in label
+                g.selectAll(".bar")
+                    .data(data)
+                    .enter().append("rect")
+                    .attr("class", "bar")
+                    .attr("x", d => x(d.label))
+                    .attr("y", d => y(d.value))
+                    .attr("width", x.bandwidth())
+                    .attr("height", d => innerHeight - y(d.value))
+                    .attr("fill", d => d.highlight ? COLORS.titleBlue : COLORS.barBlue);
+
+                // Add labels on top of bars
+                g.selectAll(".bar-label")
+                    .data(data)
+                    .enter().append("text")
+                    .attr("class", "bar-label")
+                    .attr("x", d => x(d.label) + x.bandwidth() / 2)
+                    .attr("y", d => y(d.value) - 5) // 5px padding above bar
+                    .attr("text-anchor", "middle")
+                    .style("font-size", `${fontSizeX}px`) // Harmonized with X axis
+                    .style("fill", COLORS.titleBlue)
+                    .style("font-weight", "900") // Made stronger
+                    .text(d => d3.format(".2s")(d.value).replace('G', 'B')); // Use SI notation (k, M, etc.)
+            }
+
+            function drawPieChart(data, title, colorScheme, isDonut) {
+                const width = 1200;
+                const height = 1200;
+                const radius = Math.min(width, height) / 2.8;
+                const innerRadius = isDonut ? radius * 0.65 : 0;
+                
+                const svg = d3.select("#chart-container")
+                    .append("svg")
+                    .attr("width", "100%")
+                    .attr("height", "100%")
+                    .attr("viewBox", `0 0 ${width} ${height}`)
+                    .style("background-color", "transparent")
+                    .append("g")
+                    .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+                // We need to add title to the parent SVG, not the translated group
+                drawCommonTitle(d3.select(svg.node().parentNode), title);
+
+                const color = d3.scaleOrdinal().range(colorScheme);
+
+                const pie = d3.pie().value(d => d.value).sort(null);
+                const data_ready = pie(data);
+
+                const arc = d3.arc().innerRadius(innerRadius).outerRadius(radius);
+
+                svg.selectAll('allSlices')
+                    .data(data_ready)
+                    .enter()
+                    .append('path')
+                    .attr('d', arc)
+                    .attr('fill', (d, i) => color(i))
+                    .attr('stroke', 'white')
+                    .style('stroke-width', '2px');
+                
+                // Callout lines and labels
+                const outerArc = d3.arc()
+                    .innerRadius(radius * 1.1)
+                    .outerRadius(radius * 1.1);
+                
+                svg.selectAll('allPolylines')
+                    .data(data_ready)
+                    .enter()
+                    .append('polyline')
+                    .attr('stroke', '#444')
+                    .style('fill', 'none')
+                    .attr('stroke-width', 1)
+                    .attr('points', d => {
+                        const posA = arc.centroid(d);
+                        const posB = outerArc.centroid(d);
+                        const posC = [posB[0], posB[1]];
+                        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                        posC[0] = radius * 1.15 * (midangle < Math.PI ? 1 : -1);
+                        return [posA, posB, posC];
+                    });
+
+                svg.selectAll('allLabels')
+                    .data(data_ready)
+                    .enter()
+                    .append('text')
+                    .text(d => {
+                        const total = d3.sum(data.map(item => item.value));
+                        const percentage = (d.data.value / total * 100).toFixed(1);
+                        return `${d.data.label} ${percentage}%`;
+                    })
+                    .attr('transform', d => {
+                        const pos = outerArc.centroid(d);
+                        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                        pos[0] = radius * 1.2 * (midangle < Math.PI ? 1 : -1);
+                        return `translate(${pos})`;
+                    })
+                    .style('text-anchor', d => {
+                        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                        return (midangle < Math.PI ? 'start' : 'end');
+                    })
+                    .style('font-size', '28px')
+                    .style('fill', COLORS.titleBlue)
+                    .style('font-family', 'Nunito Sans, sans-serif');
+            }
+
+            // --- SETTINGS IMPORT/EXPORT ---
+            function getSettings() {
+                const settings = {
+                    chartType: document.querySelector('input[name="chart_type"]:checked').value,
+                    chartTitle: document.getElementById('chart-title').value,
+                };
+                if (settings.chartType === 'histogram') {
+                    settings.histogram = {
+                        width: document.getElementById('chart-width').value,
+                        height: document.getElementById('chart-height').value,
+                        fontSizeX: document.getElementById('font-size-x').value,
+                        fontSizeY: document.getElementById('font-size-y').value,
+                        sortBy: document.getElementById('sort-by').value,
+                        sortDirection: document.getElementById('sort-direction').value
+                    };
+                }
+                return settings;
+            }
+
+            function applySettings(settings) {
+                document.querySelector(`input[name="chart_type"][value="${settings.chartType}"]`).checked = true;
+                document.getElementById('chart-title').value = settings.chartTitle || '';
+
+                // Trigger change to show/hide options
+                const changeEvent = new Event('change');
+                document.querySelector(`input[name="chart_type"][value="${settings.chartType}"]`).dispatchEvent(changeEvent);
+
+                if (settings.chartType === 'histogram' && settings.histogram) {
+                    document.getElementById('chart-width').value = settings.histogram.width || 800;
+                    document.getElementById('chart-height').value = settings.histogram.height || 500;
+                    document.getElementById('font-size-x').value = settings.histogram.fontSizeX || 12;
+                    document.getElementById('font-size-y').value = settings.histogram.fontSizeY || 10;
+                    document.getElementById('sort-by').value = settings.histogram.sortBy || 'none';
+                    document.getElementById('sort-direction').value = settings.histogram.sortDirection || 'desc';
+                }
+                 showFeedbackMessage('Impostazioni caricate con successo.');
+            }
+
+            saveSettingsBtn.addEventListener('click', () => {
+                const settings = getSettings();
+                const settingsString = JSON.stringify(settings, null, 2);
+                const blob = new Blob([settingsString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                const today = new Date().toISOString().slice(0, 10);
+                const filename = (settings.chartTitle || 'impostazioni_grafico').replace(/\s+/g, '_');
+                link.download = `${filename}_${today}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showFeedbackMessage('File impostazioni salvato.');
+            });
+
+            loadSettingsInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const settings = JSON.parse(e.target.result);
+                        applySettings(settings);
+                    } catch(error) {
+                        console.error("Errore nel parsing del file impostazioni:", error);
+                        showFeedbackMessage('Errore: file non valido.');
+                    }
+                };
+                reader.readAsText(file);
+                // Reset input to allow loading the same file again
+                loadSettingsInput.value = ''; 
+            });
+
+
+            // --- EXPORT FUNCTIONS ---
+            function getSvgString() {
+                const svgNode = chartContainer.querySelector('svg');
+                if (!svgNode) return null;
+                // Clone node to avoid modifying the original
+                const clone = svgNode.cloneNode(true);
+                // Add XML namespace attributes for compatibility
+                clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                return new XMLSerializer().serializeToString(clone);
+            }
+
+            downloadBtn.addEventListener('click', () => {
+                const svgString = getSvgString();
+                if (!svgString) return;
+
+                const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = (document.getElementById('chart-title').value || 'grafico') + '.svg';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showFeedbackMessage('Grafico scaricato come SVG.');
+            });
+
+            copyBtn.addEventListener('click', () => {
+                const svgString = getSvgString();
+                if (!svgString) return;
+                
+                showButtonFeedback(copyBtn, 'Copiando...');
+
+                const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                // Fallback for browsers that do not support ClipboardItem
+                 if (typeof ClipboardItem === "undefined") {
+                    // This is a simplified fallback. Pasting as rich text might not work perfectly.
+                    navigator.clipboard.writeText(svgString).then(() => {
+                        showButtonFeedback(copyBtn, 'Copiato (testo SVG)!', true);
+                        showFeedbackMessage('Codice SVG copiato negli appunti.');
+                    }, () => {
+                        showButtonFeedback(copyBtn, 'Copia Fallita', false, true);
+                        showFeedbackMessage('Errore durante la copia.');
+                    });
+                    return;
+                }
+
+                // Modern approach
+                const item = new ClipboardItem({ 'image/svg+xml': blob });
+                navigator.clipboard.write([item]).then(() => {
+                     showButtonFeedback(copyBtn, 'Copiato!', true);
+                     showFeedbackMessage('Grafico copiato. Prova a incollarlo in PowerPoint.');
+                }).catch(err => {
+                    console.error('Could not copy image: ', err);
+                    showButtonFeedback(copyBtn, 'Copia Fallita', false, true);
+                    showFeedbackMessage('Errore durante la copia. Il tuo browser potrebbe non supportare questa funzione.');
+                });
+            });
+
+            function enableExportButtons() {
+                downloadBtn.disabled = false;
+                downloadBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                downloadBtn.classList.add('brand-blue', 'text-white', 'hover:opacity-90');
+
+                copyBtn.disabled = false;
+                copyBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                copyBtn.classList.add('brand-blue', 'text-white', 'hover:opacity-90');
+            }
+            
+            function showButtonFeedback(button, message, success = false, isError = false) {
+                 const originalText = button.textContent;
+                 const originalClasses = button.className;
+                 
+                 button.textContent = message;
+                 if (isError) {
+                     button.className = 'w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg transition-all';
+                 } else if (success) {
+                     button.className = 'w-full bg-green-500 text-white font-bold py-2 px-4 rounded-lg transition-all';
+                 }
+                 
+                 setTimeout(() => {
+                     button.textContent = originalText;
+                     button.className = originalClasses;
+                 }, 2000);
+            }
+
+            function showFeedbackMessage(message) {
+                feedbackMessage.textContent = message;
+                setTimeout(() => {
+                    feedbackMessage.textContent = '';
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>
+
