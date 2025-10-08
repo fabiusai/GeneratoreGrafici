@@ -169,9 +169,15 @@
                             <option value="sentiment">Sentiment</option>
                         </select>
                     </div>
-                    <div id="pie-smart-sort-container" class="flex items-center">
-                        <input id="pie-smart-sort" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                        <label for="pie-smart-sort" class="ml-2 block text-sm text-gray-900">Alterna valori per etichette</label>
+                    <div id="pie-multi-color-options">
+                        <div id="pie-smart-sort-container" class="flex items-center">
+                            <input id="pie-smart-sort" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="pie-smart-sort" class="ml-2 block text-sm text-gray-900">Alterna valori per etichette</label>
+                        </div>
+                        <div id="pie-shuffle-colors-container" class="flex items-center mt-2">
+                            <input id="pie-shuffle-colors" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="pie-shuffle-colors" class="ml-2 block text-sm text-gray-900">Evita colori simili vicini</label>
+                        </div>
                     </div>
                     <div id="pie-invert-colors-container" class="flex items-center" style="display: none;">
                         <input id="pie-invert-colors" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
@@ -263,7 +269,7 @@
             const pieDonutSizeContainer = document.getElementById('pie-donut-size-container');
             const pieColorScheme = document.getElementById('pie-color-scheme');
             const pieInvertColorsContainer = document.getElementById('pie-invert-colors-container');
-            const pieSmartSortContainer = document.getElementById('pie-smart-sort-container');
+            const pieMultiColorOptions = document.getElementById('pie-multi-color-options');
             const pieLabelFormat = document.getElementById('pie-label-format');
             const pieDecimalsContainer = document.getElementById('pie-decimals-container');
 
@@ -279,8 +285,8 @@
                     negative: '#dc3545', // red
                 },
                 multiPie: [
-                    '#0d47a1', '#1565c0', '#1976d2', '#1e88e5', '#2196f3',
-                    '#42a5f5', '#64b5f6', '#90caf9', '#bbdefb', '#e3f2fd'
+                    '#a9c2ef', '#2e69b6', '#d2e0f7', '#c4d6f3', '#d2e0f7',
+                    '#4180d0', '#4180d0', '#2e69b6', '#2e69b6', '#a9c2ef'
                 ]
             };
 
@@ -299,7 +305,7 @@
             });
             pieColorScheme.addEventListener('change', () => {
                 pieInvertColorsContainer.style.display = pieColorScheme.value === 'two' ? 'flex' : 'none';
-                pieSmartSortContainer.style.display = pieColorScheme.value === 'multi' ? 'flex' : 'none';
+                pieMultiColorOptions.style.display = pieColorScheme.value === 'multi' ? 'block' : 'none';
             });
             pieLabelFormat.addEventListener('change', () => {
                 pieDecimalsContainer.style.display = pieLabelFormat.value === 'percentage' ? 'block' : 'none';
@@ -393,6 +399,7 @@
                                 const donutSize = document.getElementById('pie-donut-size').value;
                                 const colorSchemeType = document.getElementById('pie-color-scheme').value;
                                 const smartSort = document.getElementById('pie-smart-sort').checked;
+                                const shuffleColors = document.getElementById('pie-shuffle-colors').checked;
                                 const invertTwoColors = document.getElementById('pie-invert-colors').checked;
                                 const labelFormat = document.getElementById('pie-label-format').value;
                                 const decimalPlaces = +document.getElementById('pie-decimals').value;
@@ -415,7 +422,15 @@
                                     colorScheme = [COLORS.titleBlue, COLORS.barBlue];
                                     if (invertTwoColors) colorScheme.reverse();
                                 } else { // multi
-                                    colorScheme = COLORS.multiPie;
+                                    let multiColorScheme = [...COLORS.multiPie];
+                                    if (shuffleColors) {
+                                        for (let i = multiColorScheme.length - 1; i > 0; i--) {
+                                            const j = Math.floor(Math.random() * (i + 1));
+                                            [multiColorScheme[i], multiColorScheme[j]] = [multiColorScheme[j], multiColorScheme[i]];
+                                        }
+                                    }
+                                    colorScheme = multiColorScheme;
+
                                     if (smartSort) {
                                         const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
                                         const reordered = [];
@@ -543,7 +558,8 @@
                     .enter()
                     .append('path')
                     .attr('d', arc)
-                    .style('stroke-width', '2px');
+                    .style('stroke', 'white')
+                    .style('stroke-width', '3px');
 
                 const outerArc = d3.arc()
                     .innerRadius(radius * 1.1)
@@ -643,6 +659,7 @@
                         donutSize: document.getElementById('pie-donut-size').value,
                         colorScheme: document.getElementById('pie-color-scheme').value,
                         smartSort: document.getElementById('pie-smart-sort').checked,
+                        shuffleColors: document.getElementById('pie-shuffle-colors').checked,
                         invertColors: document.getElementById('pie-invert-colors').checked,
                         labelFormat: document.getElementById('pie-label-format').value,
                         decimalPlaces: document.getElementById('pie-decimals').value,
@@ -674,6 +691,7 @@
                     document.getElementById('pie-donut-size').value = settings.pie.donutSize || 'medio';
                     document.getElementById('pie-color-scheme').value = settings.pie.colorScheme || 'multi';
                     document.getElementById('pie-smart-sort').checked = settings.pie.smartSort || false;
+                    document.getElementById('pie-shuffle-colors').checked = settings.pie.shuffleColors || false;
                     document.getElementById('pie-invert-colors').checked = settings.pie.invertColors || false;
                     document.getElementById('pie-label-format').value = settings.pie.labelFormat || 'percentage';
                     document.getElementById('pie-decimals').value = settings.pie.decimalPlaces || '1';
@@ -749,30 +767,67 @@
             });
 
             copyBtn.addEventListener('click', () => {
+                const svgNode = chartContainer.querySelector('svg');
                 const svgString = getSvgString();
-                if (!svgString) return;
+                if (!svgNode || !svgString) return;
+
                 showButtonFeedback(copyBtn, 'Copiando...');
-                const blob = new Blob([svgString], { type: 'image/svg+xml' });
-                 if (typeof ClipboardItem === "undefined") {
-                    navigator.clipboard.writeText(svgString).then(() => {
-                        showButtonFeedback(copyBtn, 'Copiato (testo SVG)!', true);
-                        showFeedbackMessage('Codice SVG copiato negli appunti.');
-                    }, () => {
-                        showButtonfeedback(copyBtn, 'Copia Fallita', false, true);
-                        showFeedbackMessage('Errore durante la copia.');
-                    });
-                    return;
-                }
-                const item = new ClipboardItem({ 'image/svg+xml': blob });
-                navigator.clipboard.write([item]).then(() => {
-                     showButtonFeedback(copyBtn, 'Copiato!', true);
-                     showFeedbackMessage('Grafico copiato. Prova a incollarlo in PowerPoint.');
-                }).catch(err => {
-                    console.error('Could not copy image: ', err);
-                    showButtonFeedback(copyBtn, 'Copia Fallita', false, true);
-                    showFeedbackMessage('Errore durante la copia. Il tuo browser potrebbe non supportare questa funzione.');
-                });
+
+                const width = svgNode.viewBox.baseVal.width;
+                const height = svgNode.viewBox.baseVal.height;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+
+                img.onload = () => {
+                    // Fill background with white
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0);
+
+                    URL.revokeObjectURL(img.src); // Clean up blob URL
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            showButtonFeedback(copyBtn, 'Errore Conversione', false, true);
+                            return;
+                        }
+                        try {
+                            if (typeof ClipboardItem === "undefined") {
+                                throw new Error("ClipboardItem non supportato.");
+                            }
+                            const item = new ClipboardItem({ 'image/png': blob });
+                            navigator.clipboard.write([item]).then(() => {
+                                showButtonFeedback(copyBtn, 'Copiato!', true);
+                                showFeedbackMessage('Grafico copiato come immagine. Prova a incollarlo.');
+                            }).catch(err => {
+                                throw err; 
+                            });
+                        } catch (err) {
+                            console.error('Could not copy image: ', err);
+                            // Fallback to SVG text copy
+                            navigator.clipboard.writeText(svgString).then(() => {
+                                showButtonFeedback(copyBtn, 'Copiato (SVG)!', true);
+                                showFeedbackMessage('Copia come immagine non supportata. Codice SVG copiato.');
+                            }, () => {
+                                showButtonFeedback(copyBtn, 'Copia Fallita', false, true);
+                                showFeedbackMessage('Errore durante la copia.');
+                            });
+                        }
+                    }, 'image/png');
+                };
+
+                img.onerror = () => {
+                    URL.revokeObjectURL(img.src);
+                    showButtonFeedback(copyBtn, 'Errore Caricamento SVG', false, true);
+                };
+                
+                const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+                img.src = URL.createObjectURL(svgBlob);
             });
+
 
             function enableExportButtons() {
                 downloadBtn.disabled = false;
