@@ -174,7 +174,7 @@
                             <option value="sentiment">Sentiment</option>
                         </select>
                     </div>
-                    <div id="pie-multi-color-options">
+                    <div>
                         <div id="pie-smart-sort-container" class="flex items-center">
                             <input id="pie-smart-sort" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                             <label for="pie-smart-sort" class="ml-2 block text-sm text-gray-900">Alterna valori per etichette</label>
@@ -266,7 +266,6 @@
             const pieDonutSizeContainer = document.getElementById('pie-donut-size-container');
             const pieColorScheme = document.getElementById('pie-color-scheme');
             const pieInvertColorsContainer = document.getElementById('pie-invert-colors-container');
-            const pieMultiColorOptions = document.getElementById('pie-multi-color-options');
             const pieLabelFormat = document.getElementById('pie-label-format');
             const pieDecimalsContainer = document.getElementById('pie-decimals-container');
 
@@ -309,8 +308,13 @@
                 pieDonutSizeContainer.style.display = pieDonutToggle.checked ? 'block' : 'none';
             });
             pieColorScheme.addEventListener('change', () => {
+                const isMulti = pieColorScheme.value === 'multi';
+                const isMono = pieColorScheme.value === 'mono';
+                
                 pieInvertColorsContainer.style.display = pieColorScheme.value === 'two' ? 'flex' : 'none';
-                pieMultiColorOptions.style.display = pieColorScheme.value === 'multi' ? 'block' : 'none';
+                document.getElementById('pie-smart-sort-container').style.display = (isMulti || isMono) ? 'flex' : 'none';
+                document.getElementById('pie-shuffle-colors-container').style.display = isMulti ? 'flex' : 'none';
+
             });
             pieLabelFormat.addEventListener('change', () => {
                 pieDecimalsContainer.style.display = pieLabelFormat.value === 'percentage' ? 'block' : 'none';
@@ -410,25 +414,39 @@
                                 const labelFormat = document.getElementById('pie-label-format').value;
                                 const decimalPlaces = +document.getElementById('pie-decimals').value;
                                 const pieFontSizeLabels = +document.getElementById('pie-font-size-labels').value;
-                                let colorScheme;
+                                let colorSchemeOrScale;
                                 let sortedData = [...data];
+
+                                if (smartSort) {
+                                    const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
+                                    const reordered = [];
+                                    let left = 0, right = tempSorted.length - 1;
+                                    while (left <= right) {
+                                        if (left <= right) reordered.push(tempSorted[left++]);
+                                        if (left <= right) reordered.push(tempSorted[right--]);
+                                    }
+                                    sortedData = reordered;
+                                }
 
                                 if (colorSchemeType === 'sentiment') {
                                     const sentimentOrder = ['Positivo', 'Neutro', 'Negativo'];
-                                    sortedData.sort((a, b) => sentimentOrder.indexOf(a.labelParts.join(' ')) - sentimentOrder.indexOf(b.labelParts.join(' ')));
-                                    colorScheme = sortedData.map(d => {
+                                    // This mapping needs to be based on the original data, not the potentially reordered one
+                                    const colorMap = {};
+                                     data.forEach(d => {
                                         const labelLower = d.labelParts.join(' ').toLowerCase();
-                                        if (labelLower === 'positivo') return COLORS.sentiment.positive;
-                                        if (labelLower === 'neutro') return COLORS.sentiment.neutral;
-                                        if (labelLower === 'negativo') return COLORS.sentiment.negative;
-                                        return 'gray';
+                                        if (labelLower === 'positivo') colorMap[d.rawLabel] = COLORS.sentiment.positive;
+                                        else if (labelLower === 'neutro') colorMap[d.rawLabel] = COLORS.sentiment.neutral;
+                                        else if (labelLower === 'negativo') colorMap[d.rawLabel] = COLORS.sentiment.negative;
+                                        else colorMap[d.rawLabel] = 'gray';
                                     });
+                                    colorSchemeOrScale = sortedData.map(d => colorMap[d.rawLabel]);
+
                                 } else if (colorSchemeType === 'two') {
-                                    colorScheme = ['#1a2b92', '#a9c2ef'];
-                                    if (invertTwoColors) colorScheme.reverse();
+                                    colorSchemeOrScale = ['#1a2b92', '#a9c2ef'];
+                                    if (invertTwoColors) colorSchemeOrScale.reverse();
                                 } else if (colorSchemeType === 'mono') {
-                                    const interpolator = d3.interpolateLab('#e1eafb', '#1a2b92');
-                                    colorScheme = Array.from({ length: sortedData.length }, (_, i) => interpolator(i / (sortedData.length - 1 || 1)));
+                                    colorSchemeOrScale = d3.scaleSequential(d3.interpolateLab('#f0f4fc', '#1a2b92'))
+                                                         .domain(d3.extent(data, d => d.value));
                                 } else { // multi
                                     let multiColorScheme = [...COLORS.multiPie];
                                     if (shuffleColors) {
@@ -437,20 +455,9 @@
                                             [multiColorScheme[i], multiColorScheme[j]] = [multiColorScheme[j], multiColorScheme[i]];
                                         }
                                     }
-                                    colorScheme = multiColorScheme;
-
-                                    if (smartSort) {
-                                        const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
-                                        const reordered = [];
-                                        let left = 0, right = tempSorted.length - 1;
-                                        while (left <= right) {
-                                            if (left <= right) reordered.push(tempSorted[left++]);
-                                            if (left <= right) reordered.push(tempSorted[right--]);
-                                        }
-                                        sortedData = reordered;
-                                    }
+                                    colorSchemeOrScale = multiColorScheme;
                                 }
-                                drawPieChart(sortedData, title, colorScheme, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle, fontSizeTitle, pieFontSizeLabels);
+                                drawPieChart(sortedData, title, colorSchemeOrScale, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle, fontSizeTitle, pieFontSizeLabels);
                                 break;
                         }
                         
@@ -559,7 +566,7 @@
                 finalizeAndCropSvg(mainGroup.node());
             }
 
-            function drawPieChart(data, title, colorScheme, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle, fontSizeTitle, fontSizeLabels) {
+            function drawPieChart(data, title, colorSchemeOrScale, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle, fontSizeTitle, fontSizeLabels) {
                 const svgContainer = d3.select("#chart-container").append("svg")
                     .attr("width", "100%")
                     .attr("height", "100%")
@@ -618,7 +625,15 @@
                         el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${fontSizeLabels - 2}px`).style('font-weight', '400').style('fill', COLORS.titleBlue).style('font-family', 'Nunito Sans, sans-serif');
                     });
                 
-                pieG.selectAll('path').attr('fill', (d, i) => Array.isArray(colorScheme) ? colorScheme[i % colorScheme.length] : color(d.data.rawLabel));
+                pieG.selectAll('path').attr('fill', (d, i) => {
+                    if (typeof colorSchemeOrScale === 'function') { // It's a scale for 'mono'
+                        return colorSchemeOrScale(d.data.value);
+                    }
+                    if (Array.isArray(colorSchemeOrScale)) { // It's an array for 'multi', 'two', 'sentiment'
+                       return colorSchemeOrScale[i % colorSchemeOrScale.length];
+                    }
+                    return 'gray'; // Fallback
+                });
 
                 const contentBBox = mainGroup.node().getBBox();
                 
