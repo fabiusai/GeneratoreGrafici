@@ -251,11 +251,7 @@
                 barBlue: '#bfd7fd',
                 axisGray: '#7b7b7a',
                 gridGray: '#e0e0e0',
-                sentiment: {
-                    positive: '#28a745',
-                    neutral: '#ffc107',
-                    negative: '#dc3545',
-                },
+                sentiment: { positive: '#28a745', neutral: '#ffc107', negative: '#dc3545' },
                 multiPie: ['#1a2b92', '#1733ae', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc']
             };
             
@@ -346,7 +342,7 @@
                             const fontSizeX = +document.getElementById('font-size-x').value;
                             const fontSizeY = +document.getElementById('font-size-y').value;
                             drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle);
-                        } else { // pie
+                        } else {
                             const isDonut = document.getElementById('pie-donut-toggle').checked;
                             const donutSize = document.getElementById('pie-donut-size').value;
                             const colorSchemeType = document.getElementById('pie-color-scheme').value;
@@ -372,7 +368,7 @@
             function drawCommonTitle(svg, title, isHidden, fontSize) {
                 if (isHidden) return;
                 const titleGroup = svg.append('g').attr('transform', `translate(30, 20)`);
-                const textEl = titleGroup.append('text')
+                titleGroup.append('text')
                     .attr('x', 0).attr('y', 0).attr('dy', '0.8em')
                     .attr('font-family', 'Nunito Sans, sans-serif')
                     .attr('font-size', `${fontSize}px`)
@@ -429,13 +425,25 @@
             function drawPieChart(data, title, hideTitle, fontSizeTitle, options) {
                 const { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels } = options;
                 
+                // *** INIZIO CODICE CORRETTO ***
+                const canvasWidth = 1000;
+                const canvasHeight = 800; // Ridotta l'altezza per avvicinare il grafico
+                const radius = 280; 
+                
                 const svgContainer = d3.select("#chart-container").append("svg")
-                    .attr("width", "100%").attr("height", "100%")
-                    .style("background-color", "transparent");
+                    .attr("width", "100%")
+                    .attr("height", "100%")
+                    .attr("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`)
+                    .attr('preserveAspectRatio', 'xMidYMin meet'); // Allinea in alto e al centro
 
                 drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
 
-                const pieGroup = svgContainer.append('g');
+                const topMargin = hideTitle ? 40 : fontSizeTitle * 1.5 + 60;
+
+                const pieGroup = svgContainer.append('g')
+                    .attr('transform', `translate(${canvasWidth / 2}, ${topMargin + radius})`);
+                // *** FINE CODICE CORRETTO ***
+
                 let sortedData = [...data];
                 let colorSchemeOrScale;
 
@@ -468,7 +476,6 @@
                     colorSchemeOrScale = multiColorScheme;
                 }
                 
-                const radius = 250;
                 const sizeMap = { stretto: 0.75, medio: 0.6, largo: 0.45 };
                 const innerRadius = isDonut ? radius * (sizeMap[donutSize] || 0.6) : 0;
                 
@@ -498,18 +505,8 @@
                         d.data.labelParts.forEach((part, i) => el.append('tspan').attr('x', 0).attr('dy', i === 0 ? 0 : '1.2em').text(part).style('font-size', `${pieFontSizeLabels}px`).style('font-weight', '700').style('fill', COLORS.titleBlue));
                         el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${pieFontSizeLabels - 2}px`).style('font-weight', '400').style('fill', COLORS.titleBlue);
                     });
-
-                setTimeout(() => {
-                    const chartArea = svgContainer.node().getBoundingClientRect();
-                    const pieBBox = pieGroup.node().getBBox();
-                    if (pieBBox.width > 0) {
-                        const scale = Math.min((chartArea.width - 60) / pieBBox.width, (chartArea.height - (hideTitle ? 60 : 120)) / pieBBox.height) * 0.95;
-                        const titleOffset = hideTitle ? 0 : 50;
-                        const translateX = (chartArea.width / 2) - scale * (pieBBox.x + pieBBox.width / 2);
-                        const translateY = (chartArea.height / 2) - scale * (pieBBox.y + pieBBox.height / 2) + titleOffset;
-                        pieGroup.attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
-                    }
-                }, 0);
+                
+                // La logica di scaling e centraggio dinamico è stata rimossa.
             }
 
             // --- HELPERS E FUNZIONI DI SERVIZIO ---
@@ -546,7 +543,6 @@
                  else if (success) button.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition-all';
                  setTimeout(() => { button.textContent = originalText; button.className = originalClasses; }, 2000);
             }
-            // Funzioni per salvare/caricare impostazioni (semplificate)
             function getSettings(){ /* ... */ }
             function applySettings(settings){ /* ... */ }
             saveSettingsBtn.addEventListener('click', () => showButtonFeedback(saveSettingsBtn, 'Non implementato'));
