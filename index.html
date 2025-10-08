@@ -11,40 +11,23 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* Custom styles to match the branding */
         body {
             font-family: 'Nunito Sans', sans-serif;
-            background-color: #f0f2f5; /* Light grey background */
+            background-color: #f0f2f5;
         }
-        .brand-yellow {
-            background-color: #ffc72c;
-        }
-        .brand-blue {
-            background-color: #0431AE;
-        }
-        .text-brand-blue {
-            color: #0431AE;
-        }
-        .border-brand-blue {
-            border-color: #0431AE;
-        }
-        /* Custom radio button styles */
-        .custom-radio input[type="radio"] {
-            display: none;
-        }
-        .custom-radio label {
-            transition: all 0.2s ease-in-out;
-        }
+        .brand-yellow { background-color: #ffc72c; }
+        .brand-blue { background-color: #0431AE; }
+        .text-brand-blue { color: #0431AE; }
+        .border-brand-blue { border-color: #0431AE; }
+        .custom-radio input[type="radio"] { display: none; }
+        .custom-radio label { transition: all 0.2s ease-in-out; }
         .custom-radio input[type="radio"]:checked + label {
             border-color: #0431AE;
             background-color: #e0e7ff;
             color: #0431AE;
             font-weight: 700;
         }
-        /* SVG text selection */
-        svg text {
-             user-select: none;
-        }
+        svg text { user-select: none; }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -168,7 +151,7 @@
                      <div id="pie-mono-color-container" style="display: none;">
                         <label for="pie-mono-color" class="block text-sm font-medium text-gray-700">Seleziona Colore</label>
                         <select id="pie-mono-color" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                           </select>
+                        </select>
                     </div>
                     <div>
                         <div id="pie-smart-sort-container" class="flex items-center">
@@ -208,7 +191,6 @@
                 </div>
             </div>
 
-
             <div>
                  <h2 class="text-xl font-bold text-brand-blue mb-3">3. Azioni</h2>
                  <div class="flex flex-col space-y-3">
@@ -239,7 +221,6 @@
             </div>
              <p id="feedback-message" class="mt-4 text-green-600 font-semibold"></p>
         </div>
-
     </main>
 
     <script>
@@ -265,76 +246,47 @@
             const pieMonoColorContainer = document.getElementById('pie-mono-color-container');
             const pieMonoColorSelect = document.getElementById('pie-mono-color');
 
-
             const COLORS = {
                 titleBlue: '#0431AE',
                 barBlue: '#bfd7fd',
                 axisGray: '#7b7b7a',
                 gridGray: '#e0e0e0',
                 sentiment: {
-                    positive: '#28a745', // green
-                    neutral: '#ffc107', // yellow
-                    negative: '#dc3545', // red
+                    positive: '#28a745',
+                    neutral: '#ffc107',
+                    negative: '#dc3545',
                 },
-                multiPie: [
-                    '#1a2b92', '#1733ae', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', 
-                    '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc'
-                ]
+                multiPie: ['#1a2b92', '#1733ae', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc']
             };
             
-            // Italian locale for d3.format
-            const itLocale = d3.formatLocale({
-                decimal: ",",
-                thousands: ".",
-                grouping: [3],
-                currency: ["€", ""]
-            });
+            const itLocale = d3.formatLocale({ decimal: ",", thousands: ".", grouping: [3], currency: ["€", ""] });
 
-            // Populate mono color selector with swatches
             if(pieMonoColorSelect) {
                 COLORS.multiPie.forEach(color => {
                     const option = document.createElement('option');
                     option.value = color;
                     option.textContent = color.toUpperCase();
                     option.style.backgroundColor = color;
-                    const r = parseInt(color.substring(1, 3), 16);
-                    const g = parseInt(color.substring(3, 5), 16);
-                    const b = parseInt(color.substring(5, 7), 16);
-                    const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-                    if (luminance < 128) {
-                        option.style.color = 'white';
-                    }
+                    const r = parseInt(color.substring(1, 3), 16), g = parseInt(color.substring(3, 5), 16), b = parseInt(color.substring(5, 7), 16);
+                    if ((0.299 * r + 0.587 * g + 0.114 * b) < 128) option.style.color = 'white';
                     pieMonoColorSelect.appendChild(option);
                 });
             }
 
-            // Toggle chart options visibility
-            chartTypeSelectors.forEach(selector => {
-                selector.addEventListener('change', (e) => {
-                    const isHistogram = e.target.value === 'histogram';
-                    histogramOptions.style.display = isHistogram ? 'block' : 'none';
-                    pieChartOptions.style.display = !isHistogram ? 'block' : 'none';
-                });
-            });
-
-            // Toggle conditional pie chart options
-            pieDonutToggle.addEventListener('change', () => {
-                pieDonutSizeContainer.style.display = pieDonutToggle.checked ? 'block' : 'none';
-            });
+            chartTypeSelectors.forEach(selector => selector.addEventListener('change', (e) => {
+                const isHistogram = e.target.value === 'histogram';
+                histogramOptions.style.display = isHistogram ? 'block' : 'none';
+                pieChartOptions.style.display = !isHistogram ? 'block' : 'none';
+            }));
+            pieDonutToggle.addEventListener('change', () => pieDonutSizeContainer.style.display = pieDonutToggle.checked ? 'block' : 'none');
             pieColorScheme.addEventListener('change', () => {
-                const isMulti = pieColorScheme.value === 'multi';
-                const isMono = pieColorScheme.value === 'mono';
-                
                 pieInvertColorsContainer.style.display = pieColorScheme.value === 'two' ? 'flex' : 'none';
-                if(pieMonoColorContainer) pieMonoColorContainer.style.display = isMono ? 'block' : 'none';
-                if(document.getElementById('pie-smart-sort-container')) document.getElementById('pie-smart-sort-container').style.display = (isMulti || isMono) ? 'flex' : 'none';
-                if(document.getElementById('pie-shuffle-colors-container')) document.getElementById('pie-shuffle-colors-container').style.display = isMulti ? 'flex' : 'none';
+                pieMonoColorContainer.style.display = pieColorScheme.value === 'mono' ? 'block' : 'none';
+                document.getElementById('pie-smart-sort-container').style.display = ['multi', 'mono'].includes(pieColorScheme.value) ? 'flex' : 'none';
+                document.getElementById('pie-shuffle-colors-container').style.display = pieColorScheme.value === 'multi' ? 'flex' : 'none';
             });
-            pieLabelFormat.addEventListener('change', () => {
-                pieDecimalsContainer.style.display = pieLabelFormat.value === 'percentage' ? 'block' : 'none';
-            });
+            pieLabelFormat.addEventListener('change', () => pieDecimalsContainer.style.display = pieLabelFormat.value === 'percentage' ? 'block' : 'none');
 
-            // Handle file upload
             fileUpload.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -346,124 +298,65 @@
                     const sheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[sheetName];
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    const tsvData = jsonData.map(row => row.join('\t')).join('\n');
-                    dataPaste.value = tsvData;
+                    dataPaste.value = jsonData.map(row => row.join('\t')).join('\n');
                 };
                 reader.readAsArrayBuffer(file);
             });
             
-            // --- DATA PARSING ---
             function parseData() {
                 const text = dataPaste.value.trim();
-                if (!text) {
-                    alert('Per favore, inserisci dei dati.');
-                    return [];
-                }
+                if (!text) { alert('Per favore, inserisci dei dati.'); return []; }
                 return text.split('\n').map(line => {
                     const parts = line.split('\t');
                     let rawLabel = parts[0] || '';
                     const value = parseFloat(parts[1]) || 0;
-                    let cleanLabel = rawLabel;
                     const highlight = rawLabel.startsWith('*') && rawLabel.endsWith('*');
-                    if (highlight) {
-                        cleanLabel = rawLabel.substring(1, rawLabel.length - 1);
-                    }
+                    const cleanLabel = highlight ? rawLabel.substring(1, rawLabel.length - 1) : rawLabel;
                     const labelParts = cleanLabel.split('*');
                     return { rawLabel, labelParts, value, highlight };
                 }).filter(d => d.rawLabel && !isNaN(d.value));
             }
 
-            // --- CHART GENERATION LOGIC ---
             generateBtn.addEventListener('click', () => {
                 const data = parseData();
-                const chartType = document.querySelector('input[name="chart_type"]:checked').value;
-                const title = document.getElementById('chart-title').value || 'Grafico';
-                const hideTitle = document.getElementById('hide-title-toggle').checked;
-                
                 if (data.length === 0) return;
                 
                 showButtonFeedback(generateBtn, 'Generazione...');
-                
                 chartContainer.innerHTML = '';
                 feedbackMessage.textContent = '';
                 
                 setTimeout(() => {
                     try {
-                        switch (chartType) {
-                            case 'histogram':
-                                const sortBy = document.getElementById('sort-by').value;
-                                const sortDirection = document.getElementById('sort-direction').value;
-                                if (sortBy !== 'none') {
-                                    data.sort((a, b) => {
-                                        let comparison = 0;
-                                        if (sortBy === 'label') {
-                                            comparison = a.rawLabel.localeCompare(b.rawLabel);
-                                        } else {
-                                            comparison = a.value - b.value;
-                                        }
-                                        return sortDirection === 'asc' ? comparison : -comparison;
-                                    });
-                                }
-                                const width = +document.getElementById('chart-width').value;
-                                const height = +document.getElementById('chart-height').value;
-                                const fontSizeX = +document.getElementById('font-size-x').value;
-                                const fontSizeY = +document.getElementById('font-size-y').value;
-                                drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle);
-                                break;
-                            case 'pie':
-                                const isDonut = document.getElementById('pie-donut-toggle').checked;
-                                const donutSize = document.getElementById('pie-donut-size').value;
-                                const colorSchemeType = document.getElementById('pie-color-scheme').value;
-                                const smartSort = document.getElementById('pie-smart-sort').checked;
-                                const shuffleColors = document.getElementById('pie-shuffle-colors').checked;
-                                const invertTwoColors = document.getElementById('pie-invert-colors').checked;
-                                const labelFormat = document.getElementById('pie-label-format').value;
-                                const decimalPlaces = +document.getElementById('pie-decimals').value;
-                                const fontSizeTitle = +document.getElementById('font-size-title').value;
-                                const pieFontSizeLabels = +document.getElementById('pie-font-size-labels').value;
-                                let colorSchemeOrScale;
-                                let sortedData = [...data];
+                        const chartType = document.querySelector('input[name="chart_type"]:checked').value;
+                        const title = document.getElementById('chart-title').value || 'Grafico';
+                        const hideTitle = document.getElementById('hide-title-toggle').checked;
+                        const fontSizeTitle = +document.getElementById('font-size-title').value;
 
-                                if (smartSort) {
-                                    const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
-                                    const reordered = [];
-                                    let left = 0, right = tempSorted.length - 1;
-                                    while (left <= right) {
-                                        if (left <= right) reordered.push(tempSorted[left++]);
-                                        if (left <= right) reordered.push(tempSorted[right--]);
-                                    }
-                                    sortedData = reordered;
-                                }
-
-                                if (colorSchemeType === 'sentiment') {
-                                    const colorMap = {};
-                                     data.forEach(d => {
-                                        const labelLower = d.labelParts.join(' ').toLowerCase();
-                                        if (labelLower === 'positivo') colorMap[d.rawLabel] = COLORS.sentiment.positive;
-                                        else if (labelLower === 'neutro') colorMap[d.rawLabel] = COLORS.sentiment.neutral;
-                                        else if (labelLower === 'negativo') colorMap[d.rawLabel] = COLORS.sentiment.negative;
-                                        else colorMap[d.rawLabel] = 'gray';
-                                    });
-                                    colorSchemeOrScale = sortedData.map(d => colorMap[d.rawLabel]);
-
-                                } else if (colorSchemeType === 'two') {
-                                    colorSchemeOrScale = ['#1a2b92', '#a9c2ef'];
-                                    if (invertTwoColors) colorSchemeOrScale.reverse();
-                                } else if (colorSchemeType === 'mono') {
-                                    const monoColor = document.getElementById('pie-mono-color').value;
-                                    colorSchemeOrScale = () => monoColor;
-                                } else { // multi
-                                    let multiColorScheme = [...COLORS.multiPie];
-                                    if (shuffleColors) {
-                                        for (let i = multiColorScheme.length - 1; i > 0; i--) {
-                                            const j = Math.floor(Math.random() * (i + 1));
-                                            [multiColorScheme[i], multiColorScheme[j]] = [multiColorScheme[j], multiColorScheme[i]];
-                                        }
-                                    }
-                                    colorSchemeOrScale = multiColorScheme;
-                                }
-                                drawPieChart(sortedData, title, colorSchemeOrScale, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle, fontSizeTitle, pieFontSizeLabels);
-                                break;
+                        if (chartType === 'histogram') {
+                            const sortBy = document.getElementById('sort-by').value;
+                            const sortDirection = document.getElementById('sort-direction').value;
+                            if (sortBy !== 'none') {
+                                data.sort((a, b) => {
+                                    let comparison = (sortBy === 'label') ? a.rawLabel.localeCompare(b.rawLabel) : a.value - b.value;
+                                    return sortDirection === 'asc' ? comparison : -comparison;
+                                });
+                            }
+                            const width = +document.getElementById('chart-width').value;
+                            const height = +document.getElementById('chart-height').value;
+                            const fontSizeX = +document.getElementById('font-size-x').value;
+                            const fontSizeY = +document.getElementById('font-size-y').value;
+                            drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle);
+                        } else { // pie
+                            const isDonut = document.getElementById('pie-donut-toggle').checked;
+                            const donutSize = document.getElementById('pie-donut-size').value;
+                            const colorSchemeType = document.getElementById('pie-color-scheme').value;
+                            const smartSort = document.getElementById('pie-smart-sort').checked;
+                            const shuffleColors = document.getElementById('pie-shuffle-colors').checked;
+                            const invertTwoColors = document.getElementById('pie-invert-colors').checked;
+                            const labelFormat = document.getElementById('pie-label-format').value;
+                            const decimalPlaces = +document.getElementById('pie-decimals').value;
+                            const pieFontSizeLabels = +document.getElementById('pie-font-size-labels').value;
+                            drawPieChart(data, title, hideTitle, fontSizeTitle, { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels });
                         }
                         
                         enableExportButtons();
@@ -476,148 +369,150 @@
                 }, 200);
             });
             
-            // --- DRAWING FUNCTIONS ---
-
-            // Funzione titolo dalla vecchia versione (usata da entrambi i grafici per coerenza)
-            function drawCommonTitle(svg, title, isHidden, fontSize = 32) {
+            function drawCommonTitle(svg, title, isHidden, fontSize) {
                 if (isHidden) return;
-                const textEl = svg.append('text')
-                    .attr('x', 30) // Aggiunto un po' di margine
-                    .attr('y', fontSize)
+                const titleGroup = svg.append('g').attr('transform', `translate(30, 20)`);
+                const textEl = titleGroup.append('text')
+                    .attr('x', 0).attr('y', 0).attr('dy', '0.8em')
                     .attr('font-family', 'Nunito Sans, sans-serif')
                     .attr('font-size', `${fontSize}px`)
                     .attr('font-weight', '700')
                     .attr('fill', COLORS.titleBlue)
                     .text(title);
                 
-                const textBBox = textEl.node().getBBox();
-
-                svg.append('line')
-                    .attr('x1', 30)
-                    .attr('x2', 30 + textBBox.width) // Larghezza dinamica
-                    .attr('y1', fontSize + textBBox.height * 0.2)
-                    .attr('y2', fontSize + textBBox.height * 0.2)
-                    .attr('stroke', COLORS.titleBlue)
-                    .attr('stroke-width', 2);
+                titleGroup.append('line')
+                    .attr('x1', 0).attr('x2', 400)
+                    .attr('y1', fontSize * 1.1).attr('y2', fontSize * 1.1)
+                    .attr('stroke', COLORS.titleBlue).attr('stroke-width', 2);
             }
 
-            // Funzione istogramma dalla vecchia versione
-            function drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle) {
-                const titleMargin = hideTitle ? 20 : 80;
-                const longestLabel = data.reduce((a, b) => (a.rawLabel.length > b.rawLabel.length ? a : b), { rawLabel: '' }).rawLabel;
+            function drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle) {
+                const svg = d3.select("#chart-container").append("svg")
+                    .attr("width", width).attr("height", height)
+                    .attr("viewBox", `0 0 ${width} ${height}`)
+                    .style("background-color", "transparent");
+
+                drawCommonTitle(svg, title, hideTitle, fontSizeTitle);
+
+                const titleHeight = hideTitle ? 20 : fontSizeTitle * 1.5 + 40;
+                const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                 const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeX * 0.55);
-                const margin = { top: titleMargin, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                const margin = { top: titleHeight, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                
                 const innerWidth = width - margin.left - margin.right;
                 const innerHeight = height - margin.top - margin.bottom;
 
                 if (innerWidth <= 0 || innerHeight <= 0) {
-                     throw new Error("Spazio insufficiente per disegnare. Prova ad aumentare larghezza/altezza.");
+                    throw new Error("Spazio insufficiente per disegnare. Prova ad aumentare larghezza/altezza o a ridurre la dimensione dei font.");
                 }
 
-                const svg = d3.select("#chart-container").append("svg").attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`).style("background-color", "transparent");
-                drawCommonTitle(svg, title, hideTitle, 32); // Font size del titolo è fisso a 32px come nella vecchia versione
-                
-                const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+                const chartGroup = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
                 const x = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerWidth]).padding(0.4);
                 const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([innerHeight, 0]);
                 
-                g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat("")).selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-dasharray", "2,2");
-                g.select(".domain").remove();
+                chartGroup.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat("")).selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-dasharray", "2,2");
+                chartGroup.select(".domain").remove();
                 
-                const xAxis = g.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x));
-
+                const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x));
                 xAxis.selectAll(".tick text").text(null).each(function(d) {
                     const dataPoint = data.find(item => item.rawLabel === d);
                     const labelParts = dataPoint ? dataPoint.labelParts : [d];
-                    const tick = d3.select(this);
-                    labelParts.forEach((part, i) => {
-                        tick.append("tspan").attr("x", 0).attr("dy", i === 0 ? 0 : "1.2em").text(part);
-                    });
+                    d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", 0).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
                 });
-                
                 xAxis.selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-45)").style("font-size", `${fontSizeX}px`).style("fill", COLORS.axisGray);
-                g.append("g").call(d3.axisLeft(y).ticks(5)).style("font-size", `${fontSizeY}px`).style("color", COLORS.axisGray);
-                g.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? COLORS.titleBlue : COLORS.barBlue);
-                g.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeX}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => itLocale.format(".2s")(d.value).replace('G', 'B'));
+                
+                chartGroup.append("g").call(d3.axisLeft(y).ticks(5)).style("font-size", `${fontSizeY}px`).style("color", COLORS.axisGray);
+                chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? COLORS.titleBlue : COLORS.barBlue);
+                chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeX}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => itLocale.format(".2s")(d.value).replace('G', 'B'));
             }
 
-            // Funzione Grafico a torta dalla nuova versione
-            function drawPieChart(data, title, colorSchemeOrScale, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle, fontSizeTitle, fontSizeLabels) {
+            function drawPieChart(data, title, hideTitle, fontSizeTitle, options) {
+                const { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels } = options;
+                
                 const svgContainer = d3.select("#chart-container").append("svg")
-                    .attr("width", "100%")
-                    .attr("height", "100%")
+                    .attr("width", "100%").attr("height", "100%")
                     .style("background-color", "transparent");
 
-                const mainGroup = svgContainer.append('g');
-                drawCommonTitle(mainGroup, title, hideTitle, fontSizeTitle);
+                drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
 
-                const radius = 400;
+                const pieGroup = svgContainer.append('g');
+                let sortedData = [...data];
+                let colorSchemeOrScale;
+
+                if (smartSort) {
+                    const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
+                    const reordered = [];
+                    for (let left = 0, right = tempSorted.length - 1; left <= right; left++, right--) {
+                        if (left <= right) reordered.push(tempSorted[left]);
+                        if (left < right) reordered.push(tempSorted[right]);
+                    }
+                    sortedData = reordered;
+                }
+
+                if (colorSchemeType === 'sentiment') {
+                    const colorMap = new Map(data.map(d => {
+                        const labelLower = d.labelParts.join(' ').toLowerCase();
+                        if (labelLower === 'positivo') return [d.rawLabel, COLORS.sentiment.positive];
+                        if (labelLower === 'neutro') return [d.rawLabel, COLORS.sentiment.neutral];
+                        if (labelLower === 'negativo') return [d.rawLabel, COLORS.sentiment.negative];
+                        return [d.rawLabel, 'gray'];
+                    }));
+                    colorSchemeOrScale = sortedData.map(d => colorMap.get(d.rawLabel));
+                } else if (colorSchemeType === 'two') {
+                    colorSchemeOrScale = invertTwoColors ? ['#a9c2ef', '#1a2b92'] : ['#1a2b92', '#a9c2ef'];
+                } else if (colorSchemeType === 'mono') {
+                    colorSchemeOrScale = () => document.getElementById('pie-mono-color').value;
+                } else {
+                    let multiColorScheme = [...COLORS.multiPie];
+                    if (shuffleColors) multiColorScheme.sort(() => Math.random() - 0.5);
+                    colorSchemeOrScale = multiColorScheme;
+                }
+                
+                const radius = 250;
                 const sizeMap = { stretto: 0.75, medio: 0.6, largo: 0.45 };
-                const donutRatio = sizeMap[donutSize] || 0.6;
-                const innerRadius = isDonut ? radius * donutRatio : 0;
+                const innerRadius = isDonut ? radius * (sizeMap[donutSize] || 0.6) : 0;
                 
                 const pie = d3.pie().value(d => d.value).sort(null);
-                const data_ready = pie(data);
-
+                const data_ready = pie(sortedData);
                 const arc = d3.arc().innerRadius(innerRadius).outerRadius(radius);
                 const outerArc = d3.arc().innerRadius(radius * 1.1).outerRadius(radius * 1.1);
                 
-                const pieG = mainGroup.append('g');
-
-                pieG.selectAll('allSlices').data(data_ready).enter().append('path').attr('d', arc).style('stroke', 'white').style('stroke-width', '3px');
+                pieGroup.selectAll('path').data(data_ready).join('path').attr('d', arc)
+                    .attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.data.value) : colorSchemeOrScale[i % colorSchemeOrScale.length])
+                    .style('stroke', 'white').style('stroke-width', '3px');
                 
-                mainGroup.append('g').selectAll('allPolylines').data(data_ready).enter().append('polyline').attr('stroke', '#444').style('fill', 'none').attr('stroke-width', 1).attr('points', d => {
-                    const posA = arc.centroid(d);
-                    const posB = outerArc.centroid(d);
-                    const posC = [posB[0], posB[1]];
+                pieGroup.selectAll('polyline').data(data_ready).join('polyline').attr('stroke', '#444').style('fill', 'none').attr('stroke-width', 1).attr('points', d => {
                     const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
+                    const posC = outerArc.centroid(d);
                     posC[0] = radius * 1.15 * (midangle < Math.PI ? 1 : -1);
-                    return [posA, posB, posC];
+                    return [arc.centroid(d), outerArc.centroid(d), posC];
                 });
 
-                mainGroup.append('g').selectAll('allLabels').data(data_ready).enter().append('text').attr('transform', d => {
-                    const pos = outerArc.centroid(d);
-                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    pos[0] = radius * 1.20 * (midangle < Math.PI ? 1 : -1);
-                    return `translate(${pos})`;
-                }).style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'))
-                .each(function(d) {
-                    const el = d3.select(this);
-                    const labelParts = d.data.labelParts;
-                    let labelValue;
-                    if (labelFormat === 'percentage') {
+                pieGroup.selectAll('text').data(data_ready).join('text').attr('transform', d => `translate(${radius * 1.2 * ((d.startAngle + d.endAngle) / 2 < Math.PI ? 1 : -1)}, ${outerArc.centroid(d)[1]})`)
+                    .style('text-anchor', d => (d.startAngle + d.endAngle) / 2 < Math.PI ? 'start' : 'end')
+                    .each(function(d) {
+                        const el = d3.select(this);
                         const total = d3.sum(data.map(item => item.value));
-                        const percentage = total === 0 ? 0 : (d.data.value / total * 100);
-                        labelValue = itLocale.format(`.${decimalPlaces}f`)(percentage) + '%';
-                    } else {
-                        labelValue = itLocale.format(",")(d.data.value);
-                    }
-                    labelParts.forEach((part, i) => {
-                        el.append('tspan').attr('x', 0).attr('dy', i === 0 ? 0 : '1.2em').text(part).style('font-size', `${fontSizeLabels}px`).style('font-weight', '700').style('fill', COLORS.titleBlue).style('font-family', 'Nunito Sans, sans-serif');
+                        const labelValue = labelFormat === 'percentage' ? itLocale.format(`.${decimalPlaces}f`)(total === 0 ? 0 : (d.data.value / total * 100)) + '%' : itLocale.format(",")(d.data.value);
+                        el.selectAll('*').remove();
+                        d.data.labelParts.forEach((part, i) => el.append('tspan').attr('x', 0).attr('dy', i === 0 ? 0 : '1.2em').text(part).style('font-size', `${pieFontSizeLabels}px`).style('font-weight', '700').style('fill', COLORS.titleBlue));
+                        el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${pieFontSizeLabels - 2}px`).style('font-weight', '400').style('fill', COLORS.titleBlue);
                     });
-                    el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${fontSizeLabels - 2}px`).style('font-weight', '400').style('fill', COLORS.titleBlue).style('font-family', 'Nunito Sans, sans-serif');
-                });
-                
-                pieG.selectAll('path').attr('fill', (d, i) => {
-                    if (typeof colorSchemeOrScale === 'function') return colorSchemeOrScale(d.data.value);
-                    if (Array.isArray(colorSchemeOrScale)) return colorSchemeOrScale[i % colorSchemeOrScale.length];
-                    return 'gray';
-                });
-                
-                // Crop and center the pie chart
+
                 setTimeout(() => {
-                    const bbox = mainGroup.node().getBBox();
-                    if (bbox.width > 0 && bbox.height > 0) {
-                        svgContainer.attr('viewBox', `${bbox.x - 20} ${bbox.y - 20} ${bbox.width + 40} ${bbox.height + 40}`);
+                    const chartArea = svgContainer.node().getBoundingClientRect();
+                    const pieBBox = pieGroup.node().getBBox();
+                    if (pieBBox.width > 0) {
+                        const scale = Math.min((chartArea.width - 60) / pieBBox.width, (chartArea.height - (hideTitle ? 60 : 120)) / pieBBox.height) * 0.95;
+                        const titleOffset = hideTitle ? 0 : 50;
+                        const translateX = (chartArea.width / 2) - scale * (pieBBox.x + pieBBox.width / 2);
+                        const translateY = (chartArea.height / 2) - scale * (pieBBox.y + pieBBox.height / 2) + titleOffset;
+                        pieGroup.attr('transform', `translate(${translateX}, ${translateY}) scale(${scale})`);
                     }
                 }, 0);
             }
 
-            // --- SETTINGS & EXPORT ---
-            function getSettings() { /* ... logica salvataggio ... */ }
-            function applySettings(settings) { /* ... logica caricamento ... */ }
-            saveSettingsBtn.addEventListener('click', () => { /* ... */ });
-            loadSettingsInput.addEventListener('change', (event) => { /* ... */ });
+            // --- HELPERS E FUNZIONI DI SERVIZIO ---
             function getSvgString() {
                 const svgNode = chartContainer.querySelector('svg');
                 if (!svgNode) return null;
@@ -637,35 +532,26 @@
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                showFeedbackMessage('Grafico salvato come SVG.');
             });
-
-            // --- HELPERS ---
             function enableExportButtons() {
                 downloadBtn.disabled = false;
-                downloadBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                downloadBtn.classList.add('brand-blue', 'text-white', 'hover:opacity-90');
+                downloadBtn.classList.replace('bg-gray-400', 'brand-blue');
+                downloadBtn.classList.remove('cursor-not-allowed');
             }
             function showButtonFeedback(button, message, success = false, isError = false) {
                  const originalText = button.textContent;
                  const originalClasses = button.className;
                  button.textContent = message;
-                 if (isError) {
-                     button.className = 'w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg transition-all';
-                 } else if (success) {
-                     button.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition-all';
-                 }
-                 setTimeout(() => {
-                     button.textContent = originalText;
-                     button.className = originalClasses;
-                 }, 2000);
+                 if (isError) button.className = 'w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg transition-all';
+                 else if (success) button.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition-all';
+                 setTimeout(() => { button.textContent = originalText; button.className = originalClasses; }, 2000);
             }
-            function showFeedbackMessage(message) {
-                feedbackMessage.textContent = message;
-                setTimeout(() => { feedbackMessage.textContent = ''; }, 3000);
-            }
+            // Funzioni per salvare/caricare impostazioni (semplificate)
+            function getSettings(){ /* ... */ }
+            function applySettings(settings){ /* ... */ }
+            saveSettingsBtn.addEventListener('click', () => showButtonFeedback(saveSettingsBtn, 'Non implementato'));
+            loadSettingsInput.addEventListener('change', () => showButtonFeedback(loadSettingsInput, 'Non implementato'));
         });
     </script>
-
 </body>
 </html>
