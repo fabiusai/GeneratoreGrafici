@@ -546,7 +546,7 @@
                 const mainGroup = svgContainer.append('g');
 
                 const titleGroup = drawCommonTitle(mainGroup, title, hideTitle, fontSizeTitle);
-                const titleHeight = titleGroup ? titleGroup.node().getBBox().height + 40 : 0; // Increased spacing for histogram
+                const titleHeight = hideTitle ? 20 : fontSizeTitle + 40;
                 
                 const longestLabel = data.reduce((a, b) => (a.rawLabel.length > b.rawLabel.length ? a : b), { rawLabel: '' }).rawLabel;
                 const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeX * 0.55);
@@ -839,3 +839,4 @@
     </script>
 </body>
 </html>
+
