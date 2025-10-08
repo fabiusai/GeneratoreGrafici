@@ -85,6 +85,10 @@
                         <label for="chart-title" class="block text-sm font-medium text-gray-700 mb-1">Titolo del Grafico</label>
                         <input type="text" id="chart-title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Es. Interazioni Mensili">
                     </div>
+                    <div class="flex items-center">
+                        <input id="hide-title-toggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <label for="hide-title-toggle" class="ml-2 block text-sm text-gray-900">Nascondi titolo</label>
+                    </div>
                     <div>
                         <label for="data-paste" class="block text-sm font-medium text-gray-700 mb-1">Incolla dati (Label [TAB] Valore)</label>
                         <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Gennaio	150&#10;Febbraio	200&#10;Marzo	120"></textarea>
@@ -149,6 +153,14 @@
                         <input id="pie-donut-toggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                         <label for="pie-donut-toggle" class="ml-2 block text-sm text-gray-900">Grafico ad anello</label>
                     </div>
+                    <div id="pie-donut-size-container" style="display: none;">
+                        <label for="pie-donut-size" class="block text-sm font-medium text-gray-700">Spessore Anello</label>
+                        <select id="pie-donut-size" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="stretto">Stretto</option>
+                            <option value="medio" selected>Medio</option>
+                            <option value="largo">Largo</option>
+                        </select>
+                    </div>
                     <div>
                         <label for="pie-color-scheme" class="block text-sm font-medium text-gray-700">Schema Colori</label>
                         <select id="pie-color-scheme" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
@@ -156,6 +168,10 @@
                             <option value="two">2 Colori</option>
                             <option value="sentiment">Sentiment</option>
                         </select>
+                    </div>
+                    <div id="pie-smart-sort-container" class="flex items-center">
+                        <input id="pie-smart-sort" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <label for="pie-smart-sort" class="ml-2 block text-sm text-gray-900">Alterna valori per etichette</label>
                     </div>
                     <div id="pie-invert-colors-container" class="flex items-center" style="display: none;">
                         <input id="pie-invert-colors" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
@@ -233,8 +249,11 @@
             const dataPaste = document.getElementById('data-paste');
             const fileLabel = document.getElementById('file-label');
             const feedbackMessage = document.getElementById('feedback-message');
+            const pieDonutToggle = document.getElementById('pie-donut-toggle');
+            const pieDonutSizeContainer = document.getElementById('pie-donut-size-container');
             const pieColorScheme = document.getElementById('pie-color-scheme');
             const pieInvertColorsContainer = document.getElementById('pie-invert-colors-container');
+            const pieSmartSortContainer = document.getElementById('pie-smart-sort-container');
             const pieLabelFormat = document.getElementById('pie-label-format');
             const pieDecimalsContainer = document.getElementById('pie-decimals-container');
 
@@ -265,8 +284,12 @@
             });
 
             // Toggle conditional pie chart options
+            pieDonutToggle.addEventListener('change', () => {
+                pieDonutSizeContainer.style.display = pieDonutToggle.checked ? 'block' : 'none';
+            });
             pieColorScheme.addEventListener('change', () => {
                 pieInvertColorsContainer.style.display = pieColorScheme.value === 'two' ? 'flex' : 'none';
+                pieSmartSortContainer.style.display = pieColorScheme.value === 'multi' ? 'flex' : 'none';
             });
             pieLabelFormat.addEventListener('change', () => {
                 pieDecimalsContainer.style.display = pieLabelFormat.value === 'percentage' ? 'block' : 'none';
@@ -319,6 +342,7 @@
                 const data = parseData();
                 const chartType = document.querySelector('input[name="chart_type"]:checked').value;
                 const title = document.getElementById('chart-title').value || 'Grafico';
+                const hideTitle = document.getElementById('hide-title-toggle').checked;
 
                 if (data.length === 0) return;
                 
@@ -349,16 +373,19 @@
                                 const height = +document.getElementById('chart-height').value;
                                 const fontSizeX = +document.getElementById('font-size-x').value;
                                 const fontSizeY = +document.getElementById('font-size-y').value;
-                                drawHistogram(data, title, width, height, fontSizeX, fontSizeY);
+                                drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle);
                                 break;
                             case 'pie':
                                 const isDonut = document.getElementById('pie-donut-toggle').checked;
+                                const donutSize = document.getElementById('pie-donut-size').value;
                                 const colorSchemeType = document.getElementById('pie-color-scheme').value;
+                                const smartSort = document.getElementById('pie-smart-sort').checked;
                                 const invertTwoColors = document.getElementById('pie-invert-colors').checked;
                                 const labelFormat = document.getElementById('pie-label-format').value;
                                 const decimalPlaces = +document.getElementById('pie-decimals').value;
                                 let colorScheme;
                                 let sortedData = [...data];
+
                                 if (colorSchemeType === 'sentiment') {
                                     const sentimentOrder = ['Positivo', 'Neutro', 'Negativo'];
                                     sortedData.sort((a, b) => sentimentOrder.indexOf(a.label) - sentimentOrder.indexOf(b.label));
@@ -372,10 +399,20 @@
                                 } else if (colorSchemeType === 'two') {
                                     colorScheme = [COLORS.titleBlue, COLORS.barBlue];
                                     if (invertTwoColors) colorScheme.reverse();
-                                } else {
+                                } else { // multi
                                     colorScheme = COLORS.multiPie;
+                                    if (smartSort) {
+                                        const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
+                                        const reordered = [];
+                                        let left = 0, right = tempSorted.length - 1;
+                                        while (left <= right) {
+                                            if (left <= right) reordered.push(tempSorted[left++]);
+                                            if (left <= right) reordered.push(tempSorted[right--]);
+                                        }
+                                        sortedData = reordered;
+                                    }
                                 }
-                                drawPieChart(sortedData, title, colorScheme, isDonut, labelFormat, decimalPlaces);
+                                drawPieChart(sortedData, title, colorScheme, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle);
                                 break;
                         }
                         
@@ -391,7 +428,8 @@
             
             // --- DRAWING FUNCTIONS (D3.js) ---
 
-            function drawCommonTitle(svg, title) {
+            function drawCommonTitle(svg, title, isHidden) {
+                if (isHidden) return;
                 svg.append('text')
                     .attr('x', 0)
                     .attr('y', 32)
@@ -410,17 +448,18 @@
                     .attr('stroke-width', 2);
             }
 
-            function drawHistogram(data, title, width, height, fontSizeX, fontSizeY) {
+            function drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle) {
+                const titleMargin = hideTitle ? 0 : 80;
                 const longestLabel = data.reduce((a, b) => (a.label.length > b.label.length ? a : b), { label: '' }).label;
                 const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeX * 0.55);
-                const margin = { top: 80, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                const margin = { top: titleMargin, right: 30, bottom: dynamicBottomMargin, left: 60 };
                 const innerWidth = width - margin.left - margin.right;
                 const innerHeight = height - margin.top - margin.bottom;
                 const svg = d3.select("#chart-container").append("svg").attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`).style("background-color", "transparent");
-                drawCommonTitle(svg, title);
+                drawCommonTitle(svg, title, hideTitle);
                 const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
                 const x = d3.scaleBand().domain(data.map(d => d.label)).range([0, innerWidth]).padding(0.4);
-                const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1]).range([innerHeight, 0]);
+                const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([innerHeight, 0]);
                 g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat("")).selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-dasharray", "2,2");
                 g.select(".domain").remove();
                 g.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x)).selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-45)").style("font-size", `${fontSizeX}px`).style("fill", COLORS.axisGray);
@@ -429,23 +468,26 @@
                 g.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.label) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeX}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => d3.format(".2s")(d.value).replace('G', 'B'));
             }
 
-            function drawPieChart(data, title, colorScheme, isDonut, labelFormat, decimalPlaces) {
+            function drawPieChart(data, title, colorScheme, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle) {
                 const width = 1200;
                 const height = 1200;
-                // Raggio ridotto per dare più spazio alle etichette
                 const radius = Math.min(width, height) / 3.2;
-                const innerRadius = isDonut ? radius * 0.65 : 0;
                 
-                const svg = d3.select("#chart-container")
+                const sizeMap = { stretto: 0.75, medio: 0.6, largo: 0.45 };
+                const donutRatio = sizeMap[donutSize] || 0.6; // Default to medio
+                const innerRadius = isDonut ? radius * donutRatio : 0;
+                
+                const svgContainer = d3.select("#chart-container")
                     .append("svg")
                     .attr("width", "100%")
                     .attr("height", "100%")
                     .attr("viewBox", `0 0 ${width} ${height}`)
-                    .style("background-color", "transparent")
-                    .append("g")
+                    .style("background-color", "transparent");
+                    
+                const svg = svgContainer.append("g")
                     .attr("transform", `translate(${width / 2}, ${height / 2})`);
 
-                drawCommonTitle(d3.select(svg.node().parentNode), title);
+                drawCommonTitle(svgContainer, title, hideTitle);
 
                 const color = d3.scaleOrdinal().range(colorScheme);
                 const pie = d3.pie().value(d => d.value).sort(null);
@@ -460,7 +502,6 @@
                     .attr('d', arc)
                     .style('stroke-width', '2px');
 
-                // Linee di richiamo (callout lines)
                 const outerArc = d3.arc()
                     .innerRadius(radius * 1.1)
                     .outerRadius(radius * 1.1);
@@ -477,11 +518,10 @@
                         const posB = outerArc.centroid(d);
                         const posC = [posB[0], posB[1]];
                         const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                        posC[0] = radius * 1.2 * (midangle < Math.PI ? 1 : -1);
+                        posC[0] = radius * 1.15 * (midangle < Math.PI ? 1 : -1); // Shorter line
                         return [posA, posB, posC];
                     });
 
-                // Etichette multi-riga
                 svg.selectAll('allLabels')
                     .data(data_ready)
                     .enter()
@@ -489,26 +529,23 @@
                     .attr('transform', d => {
                         const pos = outerArc.centroid(d);
                         const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                        pos[0] = radius * 1.25 * (midangle < Math.PI ? 1 : -1);
+                        pos[0] = radius * 1.20 * (midangle < Math.PI ? 1 : -1); // Position text after shorter line
                         return `translate(${pos})`;
                     })
-                    .style('text-anchor', d => { // <-- MODIFICA QUI
+                    .style('text-anchor', d => {
                         const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
                         return (midangle < Math.PI ? 'start' : 'end');
                     })
                     .each(function(d) {
                         const el = d3.select(this);
-
                         let labelValue;
                         if (labelFormat === 'percentage') {
                             const total = d3.sum(data.map(item => item.value));
                             const percentage = total === 0 ? 0 : (d.data.value / total * 100);
                             labelValue = percentage.toFixed(decimalPlaces) + '%';
                         } else {
-                            labelValue = d3.format(",")(d.data.value); // Formatta con virgola per migliaia
+                            labelValue = d3.format(",")(d.data.value);
                         }
-                        
-                        // Riga 1: Nome valore (grassetto)
                         el.append('tspan')
                             .attr('x', 0)
                             .text(d.data.label)
@@ -516,8 +553,6 @@
                             .style('font-weight', '700')
                             .style('fill', COLORS.titleBlue)
                             .style('font-family', 'Nunito Sans, sans-serif');
-
-                        // Riga 2: Valore numerico
                         el.append('tspan')
                             .attr('x', 0)
                             .attr('dy', '1.2em')
@@ -528,7 +563,6 @@
                             .style('font-family', 'Nunito Sans, sans-serif');
                     });
 
-                 // Correzione colore per schemi specifici
                 svg.selectAll('path').attr('fill', (d, i) => {
                     if (Array.isArray(colorScheme)) {
                        return colorScheme[i % colorScheme.length];
@@ -542,6 +576,7 @@
                 const settings = {
                     chartType: document.querySelector('input[name="chart_type"]:checked').value,
                     chartTitle: document.getElementById('chart-title').value,
+                    hideTitle: document.getElementById('hide-title-toggle').checked,
                 };
                 if (settings.chartType === 'histogram') {
                     settings.histogram = {
@@ -555,7 +590,9 @@
                 } else if (settings.chartType === 'pie') {
                     settings.pie = {
                         isDonut: document.getElementById('pie-donut-toggle').checked,
+                        donutSize: document.getElementById('pie-donut-size').value,
                         colorScheme: document.getElementById('pie-color-scheme').value,
+                        smartSort: document.getElementById('pie-smart-sort').checked,
                         invertColors: document.getElementById('pie-invert-colors').checked,
                         labelFormat: document.getElementById('pie-label-format').value,
                         decimalPlaces: document.getElementById('pie-decimals').value
@@ -567,6 +604,8 @@
             function applySettings(settings) {
                 document.querySelector(`input[name="chart_type"][value="${settings.chartType}"]`).checked = true;
                 document.getElementById('chart-title').value = settings.chartTitle || '';
+                document.getElementById('hide-title-toggle').checked = settings.hideTitle || false;
+
 
                 const chartChangeEvent = new Event('change');
                 document.querySelector(`input[name="chart_type"][value="${settings.chartType}"]`).dispatchEvent(chartChangeEvent);
@@ -580,12 +619,15 @@
                     document.getElementById('sort-direction').value = settings.histogram.sortDirection || 'desc';
                 } else if (settings.chartType === 'pie' && settings.pie) {
                     document.getElementById('pie-donut-toggle').checked = settings.pie.isDonut || false;
+                    document.getElementById('pie-donut-size').value = settings.pie.donutSize || 'medio';
                     document.getElementById('pie-color-scheme').value = settings.pie.colorScheme || 'multi';
+                    document.getElementById('pie-smart-sort').checked = settings.pie.smartSort || false;
                     document.getElementById('pie-invert-colors').checked = settings.pie.invertColors || false;
                     document.getElementById('pie-label-format').value = settings.pie.labelFormat || 'percentage';
                     document.getElementById('pie-decimals').value = settings.pie.decimalPlaces || '1';
                     
                     const pieChangeEvent = new Event('change');
+                    document.getElementById('pie-donut-toggle').dispatchEvent(pieChangeEvent);
                     document.getElementById('pie-color-scheme').dispatchEvent(pieChangeEvent);
                     document.getElementById('pie-label-format').dispatchEvent(pieChangeEvent);
                 }
