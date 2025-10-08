@@ -285,8 +285,8 @@
                     negative: '#dc3545', // red
                 },
                 multiPie: [
-                    '#a9c2ef', '#2e69b6', '#d2e0f7', '#c4d6f3', '#d2e0f7',
-                    '#4180d0', '#4180d0', '#2e69b6', '#2e69b6', '#a9c2ef'
+                    '#0d2c54', '#1a437a', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', 
+                    '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc'
                 ]
             };
 
@@ -543,7 +543,7 @@
                     .style("background-color", "transparent");
                     
                 const svg = svgContainer.append("g")
-                    .attr("transform", `translate(${width / 2}, ${height / 2})`);
+                    .attr("transform", `translate(${width / 2}, ${height / 2.1})`); // Sposta il grafico più in alto
 
                 drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
 
