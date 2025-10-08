@@ -537,7 +537,7 @@
 
 
             function drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle) {
-                 const svgContainer = d3.select("#chart-container").append("svg")
+                const svgContainer = d3.select("#chart-container").append("svg")
                     .attr("width", width)
                     .attr("height", height)
                     .attr("viewBox", `0 0 ${width} ${height}`)
@@ -546,8 +546,8 @@
                 const mainGroup = svgContainer.append('g');
 
                 const titleGroup = drawCommonTitle(mainGroup, title, hideTitle, fontSizeTitle);
-
-                const titleHeight = hideTitle ? 0 : fontSizeTitle * 1.5 + 20;
+                
+                const titleHeight = hideTitle ? 20 : fontSizeTitle * 1.5 + 40;
 
                 const longestLabel = data.reduce((a, b) => (a.rawLabel.length > b.rawLabel.length ? a : b), { rawLabel: '' }).rawLabel;
                 const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeX * 0.55);
