@@ -174,6 +174,23 @@
                             <option value="sentiment">Sentiment</option>
                         </select>
                     </div>
+                     <div id="pie-mono-color-container" style="display: none;">
+                        <label for="pie-mono-color" class="block text-sm font-medium text-gray-700">Seleziona Colore</label>
+                        <select id="pie-mono-color" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="#1a2b92">#1a2b92</option>
+                            <option value="#1733ae">#1733ae</option>
+                            <option value="#2e69b6">#2e69b6</option>
+                            <option value="#4180d0">#4180d0</option>
+                            <option value="#5c95dd">#5c95dd</option>
+                            <option value="#7da9e6">#7da9e6</option>
+                            <option value="#97bdee">#97bdee</option>
+                            <option value="#a9c2ef">#a9c2ef</option>
+                            <option value="#c4d6f3">#c4d6f3</option>
+                            <option value="#d2e0f7">#d2e0f7</option>
+                            <option value="#e1eafb">#e1eafb</option>
+                            <option value="#f0f4fc">#f0f4fc</option>
+                        </select>
+                    </div>
                     <div>
                         <div id="pie-smart-sort-container" class="flex items-center">
                             <input id="pie-smart-sort" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
@@ -268,6 +285,7 @@
             const pieInvertColorsContainer = document.getElementById('pie-invert-colors-container');
             const pieLabelFormat = document.getElementById('pie-label-format');
             const pieDecimalsContainer = document.getElementById('pie-decimals-container');
+            const pieMonoColorContainer = document.getElementById('pie-mono-color-container');
 
 
             const COLORS = {
@@ -312,6 +330,7 @@
                 const isMono = pieColorScheme.value === 'mono';
                 
                 pieInvertColorsContainer.style.display = pieColorScheme.value === 'two' ? 'flex' : 'none';
+                pieMonoColorContainer.style.display = isMono ? 'block' : 'none';
                 document.getElementById('pie-smart-sort-container').style.display = (isMulti || isMono) ? 'flex' : 'none';
                 document.getElementById('pie-shuffle-colors-container').style.display = isMulti ? 'flex' : 'none';
 
@@ -445,8 +464,8 @@
                                     colorSchemeOrScale = ['#1a2b92', '#a9c2ef'];
                                     if (invertTwoColors) colorSchemeOrScale.reverse();
                                 } else if (colorSchemeType === 'mono') {
-                                    colorSchemeOrScale = d3.scaleSequential(d3.interpolateLab('#f0f4fc', '#1a2b92'))
-                                                         .domain(d3.extent(data, d => d.value));
+                                    const monoColor = document.getElementById('pie-mono-color').value;
+                                    colorSchemeOrScale = () => monoColor;
                                 } else { // multi
                                     let multiColorScheme = [...COLORS.multiPie];
                                     if (shuffleColors) {
@@ -626,7 +645,7 @@
                     });
                 
                 pieG.selectAll('path').attr('fill', (d, i) => {
-                    if (typeof colorSchemeOrScale === 'function') { // It's a scale for 'mono'
+                    if (typeof colorSchemeOrScale === 'function') { // It's a scale or a single color function
                         return colorSchemeOrScale(d.data.value);
                     }
                     if (Array.isArray(colorSchemeOrScale)) { // It's an array for 'multi', 'two', 'sentiment'
@@ -670,6 +689,7 @@
                         isDonut: document.getElementById('pie-donut-toggle').checked,
                         donutSize: document.getElementById('pie-donut-size').value,
                         colorScheme: document.getElementById('pie-color-scheme').value,
+                        monoColor: document.getElementById('pie-mono-color').value,
                         smartSort: document.getElementById('pie-smart-sort').checked,
                         shuffleColors: document.getElementById('pie-shuffle-colors').checked,
                         invertColors: document.getElementById('pie-invert-colors').checked,
@@ -702,6 +722,7 @@
                     document.getElementById('pie-donut-toggle').checked = settings.pie.isDonut || false;
                     document.getElementById('pie-donut-size').value = settings.pie.donutSize || 'medio';
                     document.getElementById('pie-color-scheme').value = settings.pie.colorScheme || 'multi';
+                    document.getElementById('pie-mono-color').value = settings.pie.monoColor || '#1a2b92';
                     document.getElementById('pie-smart-sort').checked = settings.pie.smartSort || false;
                     document.getElementById('pie-shuffle-colors').checked = settings.pie.shuffleColors || false;
                     document.getElementById('pie-invert-colors').checked = settings.pie.invertColors || false;
