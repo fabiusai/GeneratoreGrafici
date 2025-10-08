@@ -220,10 +220,7 @@
                         Genera Grafico
                     </button>
                     <button id="download-btn" disabled class="w-full bg-gray-400 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed">
-                        Scarica SVG
-                    </button>
-                    <button id="copy-btn" disabled class="w-full bg-gray-400 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed">
-                        Copia Grafico
+                        Salva SVG
                     </button>
                     <hr class="my-2">
                     <button id="save-settings-btn" class="w-full bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors">
@@ -257,7 +254,6 @@
             const pieChartOptions = document.getElementById('pie-chart-options');
             const generateBtn = document.getElementById('generate-btn');
             const downloadBtn = document.getElementById('download-btn');
-            const copyBtn = document.getElementById('copy-btn');
             const saveSettingsBtn = document.getElementById('save-settings-btn');
             const loadSettingsInput = document.getElementById('load-settings-input');
             const chartContainer = document.getElementById('chart-container');
@@ -285,10 +281,18 @@
                     negative: '#dc3545', // red
                 },
                 multiPie: [
-                    '#0d2c54', '#1a437a', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', 
+                    '#1a2b92', '#1733ae', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', 
                     '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc'
                 ]
             };
+            
+            // Italian locale for d3.format
+            const itLocale = d3.formatLocale({
+                decimal: ",",
+                thousands: ".",
+                grouping: [3],
+                currency: ["€", ""]
+            });
 
             // Toggle chart options visibility
             chartTypeSelectors.forEach(selector => {
@@ -457,45 +461,68 @@
             });
             
             // --- DRAWING FUNCTIONS (D3.js) ---
+            function finalizeAndCropSvg(svgNode, padding = 20) {
+                const bbox = svgNode.getBBox();
+                if (bbox.width > 0 && bbox.height > 0) {
+                    d3.select(svgNode.ownerSVGElement)
+                      .attr('viewBox', `${bbox.x - padding} ${bbox.y - padding} ${bbox.width + padding * 2} ${bbox.height + padding * 2}`);
+                }
+            }
 
-            function drawCommonTitle(svg, title, isHidden, fontSize = 32) {
-                if (isHidden) return;
-                const textEl = svg.append('text')
+            function drawCommonTitle(group, title, isHidden, fontSize = 32) {
+                if (isHidden) return null;
+                const titleGroup = group.append('g').attr('class', 'chart-title-group');
+                const textEl = titleGroup.append('text')
                     .attr('x', 0)
-                    .attr('y', fontSize) // Adjust y based on font size
+                    .attr('y', 0)
+                    .attr('dy', '0.8em')
                     .attr('font-family', 'Nunito Sans, sans-serif')
                     .attr('font-size', `${fontSize}px`)
                     .attr('font-weight', '700')
                     .attr('fill', COLORS.titleBlue)
                     .text(title);
                 
-                const textHeight = textEl.node().getBBox().height;
+                const textBBox = textEl.node().getBBox();
 
-                svg.append('line')
+                titleGroup.append('line')
                     .attr('x1', 0)
-                    .attr('x2', 400) // Fixed length, can be dynamic
-                    .attr('y1', fontSize + textHeight * 0.2)
-                    .attr('y2', fontSize + textHeight * 0.2)
+                    .attr('x2', 400)
+                    .attr('y1', textBBox.y + textBBox.height + 2)
+                    .attr('y2', textBBox.y + textBBox.height + 2)
                     .attr('stroke', COLORS.titleBlue)
                     .attr('stroke-width', 2);
+                
+                return titleGroup;
             }
 
+
             function drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle) {
-                const titleMargin = hideTitle ? 20 : 80;
+                const svgContainer = d3.select("#chart-container").append("svg")
+                    .attr("width", "100%")
+                    .attr("height", "100%")
+                    .style("background-color", "transparent");
+
+                const mainGroup = svgContainer.append('g');
+
+                const titleGroup = drawCommonTitle(mainGroup, title, hideTitle, 32);
+                const titleHeight = titleGroup ? titleGroup.node().getBBox().height + 20 : 0;
+                
                 const longestLabel = data.reduce((a, b) => (a.rawLabel.length > b.rawLabel.length ? a : b), { rawLabel: '' }).rawLabel;
                 const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeX * 0.55);
-                const margin = { top: titleMargin, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                const margin = { top: 20, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                
                 const innerWidth = width - margin.left - margin.right;
-                const innerHeight = height - margin.top - margin.bottom;
-                const svg = d3.select("#chart-container").append("svg").attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`).style("background-color", "transparent");
-                drawCommonTitle(svg, title, hideTitle, 32);
-                const g = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+                const innerHeight = height - titleHeight - margin.top - margin.bottom;
+
+                if (titleGroup) titleGroup.attr('transform', `translate(${margin.left}, 0)`);
+
+                const chartGroup = mainGroup.append("g").attr("transform", `translate(${margin.left}, ${titleHeight + margin.top})`);
                 const x = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerWidth]).padding(0.4);
                 const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([innerHeight, 0]);
-                g.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat("")).selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-dasharray", "2,2");
-                g.select(".domain").remove();
+                chartGroup.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat("")).selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-dasharray", "2,2");
+                chartGroup.select(".domain").remove();
                 
-                const xAxis = g.append("g")
+                const xAxis = chartGroup.append("g")
                     .attr("transform", `translate(0, ${innerHeight})`)
                     .call(d3.axisBottom(x));
 
@@ -521,120 +548,85 @@
                     .style("font-size", `${fontSizeX}px`)
                     .style("fill", COLORS.axisGray);
 
-                g.append("g").call(d3.axisLeft(y).ticks(5)).style("font-size", `${fontSizeY}px`).style("color", COLORS.axisGray);
-                g.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? COLORS.titleBlue : COLORS.barBlue);
-                g.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeX}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => d3.format(".2s")(d.value).replace('G', 'B'));
+                chartGroup.append("g").call(d3.axisLeft(y).ticks(5)).style("font-size", `${fontSizeY}px`).style("color", COLORS.axisGray);
+                chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? COLORS.titleBlue : COLORS.barBlue);
+                chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeX}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => itLocale.format(".2s")(d.value).replace('G', 'B'));
+            
+                finalizeAndCropSvg(mainGroup.node());
             }
 
             function drawPieChart(data, title, colorScheme, isDonut, donutSize, labelFormat, decimalPlaces, hideTitle, fontSizeTitle, fontSizeLabels) {
-                const width = 1200;
-                const height = 1200;
-                const radius = Math.min(width, height) / 3.6; // Raggio ridotto per più spazio
-                
-                const sizeMap = { stretto: 0.75, medio: 0.6, largo: 0.45 };
-                const donutRatio = sizeMap[donutSize] || 0.6; // Default to medio
-                const innerRadius = isDonut ? radius * donutRatio : 0;
-                
-                const svgContainer = d3.select("#chart-container")
-                    .append("svg")
+                const svgContainer = d3.select("#chart-container").append("svg")
                     .attr("width", "100%")
                     .attr("height", "100%")
-                    .attr("viewBox", `0 0 ${width} ${height}`)
                     .style("background-color", "transparent");
-                    
-                const svg = svgContainer.append("g")
-                    .attr("transform", `translate(${width / 2}, ${height / 2.1})`); // Sposta il grafico più in alto
 
-                drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
-
-                const color = d3.scaleOrdinal().range(colorScheme);
+                const mainGroup = svgContainer.append('g');
+                
+                const radius = 400; // Use a large fixed radius and let viewBox scale it down
+                const sizeMap = { stretto: 0.75, medio: 0.6, largo: 0.45 };
+                const donutRatio = sizeMap[donutSize] || 0.6;
+                const innerRadius = isDonut ? radius * donutRatio : 0;
+                
                 const pie = d3.pie().value(d => d.value).sort(null);
                 const data_ready = pie(data);
 
                 const arc = d3.arc().innerRadius(innerRadius).outerRadius(radius);
-
-                svg.selectAll('allSlices')
-                    .data(data_ready)
-                    .enter()
-                    .append('path')
-                    .attr('d', arc)
-                    .style('stroke', 'white')
-                    .style('stroke-width', '3px');
-
-                const outerArc = d3.arc()
-                    .innerRadius(radius * 1.1)
-                    .outerRadius(radius * 1.1);
-
-                svg.selectAll('allPolylines')
-                    .data(data_ready)
-                    .enter()
-                    .append('polyline')
-                    .attr('stroke', '#444')
-                    .style('fill', 'none')
-                    .attr('stroke-width', 1)
+                const outerArc = d3.arc().innerRadius(radius * 1.1).outerRadius(radius * 1.1);
+                
+                const pieG = mainGroup.append('g');
+                pieG.selectAll('allSlices').data(data_ready).enter().append('path').attr('d', arc).style('stroke', 'white').style('stroke-width', '3px');
+                
+                mainGroup.append('g').selectAll('allPolylines')
+                    .data(data_ready).enter().append('polyline')
+                    .attr('stroke', '#444').style('fill', 'none').attr('stroke-width', 1)
                     .attr('points', d => {
                         const posA = arc.centroid(d);
                         const posB = outerArc.centroid(d);
                         const posC = [posB[0], posB[1]];
                         const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                        posC[0] = radius * 1.15 * (midangle < Math.PI ? 1 : -1); // Shorter line
+                        posC[0] = radius * 1.15 * (midangle < Math.PI ? 1 : -1);
                         return [posA, posB, posC];
                     });
 
-                svg.selectAll('allLabels')
-                    .data(data_ready)
-                    .enter()
-                    .append('text')
+                mainGroup.append('g').selectAll('allLabels')
+                    .data(data_ready).enter().append('text')
                     .attr('transform', d => {
                         const pos = outerArc.centroid(d);
                         const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                        pos[0] = radius * 1.20 * (midangle < Math.PI ? 1 : -1); // Position text after shorter line
+                        pos[0] = radius * 1.20 * (midangle < Math.PI ? 1 : -1);
                         return `translate(${pos})`;
-                    })
-                    .style('text-anchor', d => {
-                        const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                        return (midangle < Math.PI ? 'start' : 'end');
-                    })
+                    }).style('text-anchor', d => (d.startAngle + (d.endAngle - d.startAngle) / 2 < Math.PI ? 'start' : 'end'))
                     .each(function(d) {
                         const el = d3.select(this);
                         const labelParts = d.data.labelParts;
-
                         let labelValue;
                         if (labelFormat === 'percentage') {
                             const total = d3.sum(data.map(item => item.value));
                             const percentage = total === 0 ? 0 : (d.data.value / total * 100);
-                            labelValue = percentage.toFixed(decimalPlaces) + '%';
+                            labelValue = itLocale.format(`.${decimalPlaces}f`)(percentage) + '%';
                         } else {
-                            labelValue = d3.format(",")(d.data.value);
+                            labelValue = itLocale.format(",")(d.data.value);
                         }
-
                         labelParts.forEach((part, i) => {
-                             el.append('tspan')
-                                .attr('x', 0)
-                                .attr('dy', i === 0 ? 0 : '1.2em')
-                                .text(part)
-                                .style('font-size', `${fontSizeLabels}px`)
-                                .style('font-weight', '700')
-                                .style('fill', COLORS.titleBlue)
-                                .style('font-family', 'Nunito Sans, sans-serif');
+                            el.append('tspan').attr('x', 0).attr('dy', i === 0 ? 0 : '1.2em').text(part).style('font-size', `${fontSizeLabels}px`).style('font-weight', '700').style('fill', COLORS.titleBlue).style('font-family', 'Nunito Sans, sans-serif');
                         });
-                       
-                        el.append('tspan')
-                            .attr('x', 0)
-                            .attr('dy', '1.2em')
-                            .text(labelValue)
-                            .style('font-size', `${fontSizeLabels - 2}px`)
-                            .style('font-weight', '400')
-                            .style('fill', COLORS.titleBlue)
-                            .style('font-family', 'Nunito Sans, sans-serif');
+                        el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${fontSizeLabels - 2}px`).style('font-weight', '400').style('fill', COLORS.titleBlue).style('font-family', 'Nunito Sans, sans-serif');
                     });
+                
+                pieG.selectAll('path').attr('fill', (d, i) => Array.isArray(colorScheme) ? colorScheme[i % colorScheme.length] : color(d.data.rawLabel));
 
-                svg.selectAll('path').attr('fill', (d, i) => {
-                    if (Array.isArray(colorScheme)) {
-                       return colorScheme[i % colorScheme.length];
-                    }
-                    return color(d.data.rawLabel);
-                });
+                const contentBBox = mainGroup.node().getBBox();
+                
+                const titleGroup = drawCommonTitle(mainGroup, title, hideTitle, fontSizeTitle);
+
+                if (titleGroup) {
+                    const titleBBox = titleGroup.node().getBBox();
+                    // Position title above the chart's content, aligned to the left
+                    titleGroup.attr('transform', `translate(${contentBBox.x}, ${contentBBox.y - titleBBox.height - fontSizeTitle})`);
+                }
+                
+                finalizeAndCropSvg(mainGroup.node());
             }
 
             // --- SETTINGS IMPORT/EXPORT ---
@@ -763,80 +755,13 @@
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                showFeedbackMessage('Grafico scaricato come SVG.');
+                showFeedbackMessage('Grafico salvato come SVG.');
             });
-
-            copyBtn.addEventListener('click', () => {
-                const svgNode = chartContainer.querySelector('svg');
-                const svgString = getSvgString();
-                if (!svgNode || !svgString) return;
-
-                showButtonFeedback(copyBtn, 'Copiando...');
-
-                const width = svgNode.viewBox.baseVal.width;
-                const height = svgNode.viewBox.baseVal.height;
-
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                const img = new Image();
-
-                img.onload = () => {
-                    // Fill background with white
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, width, height);
-                    ctx.drawImage(img, 0, 0, width, height); // Correctly scale the image to the canvas
-
-                    URL.revokeObjectURL(img.src); // Clean up blob URL
-                    canvas.toBlob((blob) => {
-                        if (!blob) {
-                            showButtonFeedback(copyBtn, 'Errore Conversione', false, true);
-                            return;
-                        }
-                        try {
-                            if (typeof ClipboardItem === "undefined") {
-                                throw new Error("ClipboardItem non supportato.");
-                            }
-                            const item = new ClipboardItem({ 'image/png': blob });
-                            navigator.clipboard.write([item]).then(() => {
-                                showButtonFeedback(copyBtn, 'Copiato!', true);
-                                showFeedbackMessage('Grafico copiato come immagine. Prova a incollarlo.');
-                            }).catch(err => {
-                                throw err; 
-                            });
-                        } catch (err) {
-                            console.error('Could not copy image: ', err);
-                            // Fallback to SVG text copy
-                            navigator.clipboard.writeText(svgString).then(() => {
-                                showButtonFeedback(copyBtn, 'Copiato (SVG)!', true);
-                                showFeedbackMessage('Copia come immagine non supportata. Codice SVG copiato.');
-                            }, () => {
-                                showButtonFeedback(copyBtn, 'Copia Fallita', false, true);
-                                showFeedbackMessage('Errore durante la copia.');
-                            });
-                        }
-                    }, 'image/png');
-                };
-
-                img.onerror = () => {
-                    URL.revokeObjectURL(img.src);
-                    showButtonFeedback(copyBtn, 'Errore Caricamento SVG', false, true);
-                };
-                
-                const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
-                img.src = URL.createObjectURL(svgBlob);
-            });
-
-
+            
             function enableExportButtons() {
                 downloadBtn.disabled = false;
                 downloadBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
                 downloadBtn.classList.add('brand-blue', 'text-white', 'hover:opacity-90');
-
-                copyBtn.disabled = false;
-                copyBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
-                copyBtn.classList.add('brand-blue', 'text-white', 'hover:opacity-90');
             }
             
             function showButtonFeedback(button, message, success = false, isError = false) {
