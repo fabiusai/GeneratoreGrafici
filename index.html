@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generatore Grafici</title>
+    <link rel="icon" href="favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -28,6 +29,18 @@
             font-weight: 700;
         }
         svg text { user-select: none; }
+        
+        .input-toggle-btn.active {
+            background-color: #e0e7ff;
+            color: #0431AE;
+            font-weight: 700;
+            border-color: #0431AE;
+        }
+        .input-toggle-btn.inactive {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border-color: #dee2e6;
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -69,10 +82,32 @@
                         <input id="hide-title-toggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                         <label for="hide-title-toggle" class="ml-2 block text-sm text-gray-900">Nascondi titolo</label>
                     </div>
+                    
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Modalità Inserimento Dati</label>
+                        <div class="flex rounded-md shadow-sm">
+                            <button id="toggle-paste-btn" type="button" class="input-toggle-btn active w-1/2 relative inline-flex items-center justify-center p-2 rounded-l-md border text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">Incolla Dati</button>
+                            <button id="toggle-manual-btn" type="button" class="input-toggle-btn inactive -ml-px w-1/2 relative inline-flex items-center justify-center p-2 rounded-r-md border text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">Manuale</button>
+                        </div>
+                    </div>
+                    
+                    <div id="paste-data-container">
                         <label for="data-paste" class="block text-sm font-medium text-gray-700 mb-1">Incolla dati (Label [TAB] Valore)</label>
                         <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Servizi*Finanziari	150&#10;Febbraio	200&#10;*Marzo*	120"></textarea>
                     </div>
+
+                    <div id="manual-entry-wrapper" style="display: none;">
+                        <div class="flex gap-2 mb-2 px-1">
+                            <div class="w-2/3 text-sm font-semibold text-gray-600">Etichetta</div>
+                            <div class="w-1/3 text-sm font-semibold text-gray-600">Valore</div>
+                        </div>
+                        <div id="manual-data-container" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                        </div>
+                        <button type="button" id="add-row-btn" class="mt-2 w-full text-sm text-brand-blue font-semibold py-2 px-4 rounded-md border-2 border-dashed border-gray-300 hover:bg-gray-50 transition-colors">
+                            + Aggiungi Riga
+                        </button>
+                    </div>
+
                     <div class="text-center text-gray-500">oppure</div>
                     <div>
                         <label for="file-upload" class="w-full inline-block text-center px-4 py-2 border border-dashed border-gray-400 rounded-md cursor-pointer hover:bg-gray-50">
@@ -85,41 +120,50 @@
 
             <div id="histogram-options" class="mb-6">
                 <h3 class="text-lg font-bold text-brand-blue mb-3">Opzioni Istogramma</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="chart-width" class="block text-sm font-medium text-gray-700">Larghezza (px)</label>
-                        <input type="number" id="chart-width" value="800" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="chart-width" class="block text-sm font-medium text-gray-700">Larghezza (px)</label>
+                            <input type="number" id="chart-width" value="800" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="chart-height" class="block text-sm font-medium text-gray-700">Altezza (px)</label>
+                            <input type="number" id="chart-height" value="500" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
                     </div>
                     <div>
-                        <label for="chart-height" class="block text-sm font-medium text-gray-700">Altezza (px)</label>
-                        <input type="number" id="chart-height" value="500" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mt-4">
-                     <div>
-                        <label for="font-size-x" class="block text-sm font-medium text-gray-700">Font Asse X (px)</label>
-                        <input type="number" id="font-size-x" value="12" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div>
-                        <label for="font-size-y" class="block text-sm font-medium text-gray-700">Font Asse Y (px)</label>
-                        <input type="number" id="font-size-y" value="10" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mt-4">
-                    <div>
-                        <label for="sort-by" class="block text-sm font-medium text-gray-700">Ordina per</label>
-                        <select id="sort-by" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="none" selected>Nessun ordine (default)</option>
-                            <option value="label">Etichetta (Col A)</option>
-                            <option value="value">Valore (Col B)</option>
+                        <label for="chart-orientation" class="block text-sm font-medium text-gray-700">Orientamento</label>
+                        <select id="chart-orientation" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="vertical" selected>Verticale (default)</option>
+                            <option value="horizontal">Orizzontale</option>
                         </select>
                     </div>
-                    <div>
-                        <label for="sort-direction" class="block text-sm font-medium text-gray-700">Direzione</label>
-                        <select id="sort-direction" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="asc">Crescente (A-Z, 0-9)</option>
-                            <option value="desc" selected>Decrescente (Z-A, 9-0)</option>
-                        </select>
+                    <div class="grid grid-cols-2 gap-4">
+                         <div>
+                            <label for="font-size-x" class="block text-sm font-medium text-gray-700">Font Assi (px)</label>
+                            <input type="number" id="font-size-x" value="12" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="font-size-y" class="block text-sm font-medium text-gray-700">Font Valori (px)</label>
+                            <input type="number" id="font-size-y" value="12" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="sort-by" class="block text-sm font-medium text-gray-700">Ordina per</label>
+                            <select id="sort-by" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="none" selected>Nessun ordine (default)</option>
+                                <option value="label">Etichetta (Col A)</option>
+                                <option value="value">Valore (Col B)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="sort-direction" class="block text-sm font-medium text-gray-700">Direzione</label>
+                            <select id="sort-direction" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="asc">Crescente (A-Z, 0-9)</option>
+                                <option value="desc" selected>Decrescente (Z-A, 9-0)</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -212,9 +256,9 @@
             </div>
         </div>
 
-        <div class="lg:col-span-8 bg-white p-4 md:p-6 rounded-lg shadow-lg flex flex-col items-center justify-center min-h-[500px]">
-            <div id="chart-container" class="w-full h-full flex items-center justify-center">
-                <div class="text-gray-400">
+        <div class="lg:col-span-8 bg-white p-4 md:p-6 rounded-lg shadow-lg flex flex-col items-center justify-start min-h-[500px]">
+            <div id="chart-container" class="w-full h-full">
+                <div id="placeholder" class="text-gray-400 flex flex-col items-center justify-center h-full">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     <p class="mt-2">L'anteprima del grafico apparirà qui.</p>
                 </div>
@@ -230,33 +274,28 @@
             const pieChartOptions = document.getElementById('pie-chart-options');
             const generateBtn = document.getElementById('generate-btn');
             const downloadBtn = document.getElementById('download-btn');
-            const saveSettingsBtn = document.getElementById('save-settings-btn');
-            const loadSettingsInput = document.getElementById('load-settings-input');
             const chartContainer = document.getElementById('chart-container');
             const fileUpload = document.getElementById('file-upload');
-            const dataPaste = document.getElementById('data-paste');
             const fileLabel = document.getElementById('file-label');
             const feedbackMessage = document.getElementById('feedback-message');
-            const pieDonutToggle = document.getElementById('pie-donut-toggle');
-            const pieDonutSizeContainer = document.getElementById('pie-donut-size-container');
-            const pieColorScheme = document.getElementById('pie-color-scheme');
-            const pieInvertColorsContainer = document.getElementById('pie-invert-colors-container');
-            const pieLabelFormat = document.getElementById('pie-label-format');
-            const pieDecimalsContainer = document.getElementById('pie-decimals-container');
-            const pieMonoColorContainer = document.getElementById('pie-mono-color-container');
-            const pieMonoColorSelect = document.getElementById('pie-mono-color');
+            const togglePasteBtn = document.getElementById('toggle-paste-btn');
+            const toggleManualBtn = document.getElementById('toggle-manual-btn');
+            const pasteDataContainer = document.getElementById('paste-data-container');
+            const manualEntryWrapper = document.getElementById('manual-entry-wrapper');
+            const manualDataContainer = document.getElementById('manual-data-container');
+            const dataPaste = document.getElementById('data-paste');
+            const addRowBtn = document.getElementById('add-row-btn');
+            const saveSettingsBtn = document.getElementById('save-settings-btn');
+            const loadSettingsInput = document.getElementById('load-settings-input');
 
             const COLORS = {
-                titleBlue: '#0431AE',
-                barBlue: '#bfd7fd',
-                axisGray: '#7b7b7a',
-                gridGray: '#e0e0e0',
+                titleBlue: '#0431AE', barBlue: '#bfd7fd', axisGray: '#7b7b7a', gridGray: '#e0e0e0',
                 sentiment: { positive: '#28a745', neutral: '#ffc107', negative: '#dc3545' },
                 multiPie: ['#1a2b92', '#1733ae', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc']
             };
-            
             const itLocale = d3.formatLocale({ decimal: ",", thousands: ".", grouping: [3], currency: ["€", ""] });
 
+            const pieMonoColorSelect = document.getElementById('pie-mono-color');
             if(pieMonoColorSelect) {
                 COLORS.multiPie.forEach(color => {
                     const option = document.createElement('option');
@@ -269,19 +308,55 @@
                 });
             }
 
+            togglePasteBtn.addEventListener('click', () => {
+                pasteDataContainer.style.display = 'block';
+                manualEntryWrapper.style.display = 'none';
+                togglePasteBtn.classList.replace('inactive', 'active');
+                toggleManualBtn.classList.replace('active', 'inactive');
+            });
+            toggleManualBtn.addEventListener('click', () => {
+                pasteDataContainer.style.display = 'none';
+                manualEntryWrapper.style.display = 'block';
+                toggleManualBtn.classList.replace('inactive', 'active');
+                togglePasteBtn.classList.replace('active', 'inactive');
+            });
+
+            const createDataRow = (label = '', value = '') => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex gap-2 data-row';
+                const labelInput = document.createElement('input');
+                labelInput.type = 'text';
+                labelInput.className = 'data-label w-2/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
+                labelInput.placeholder = 'Es. Etichetta';
+                labelInput.value = label;
+                const valueInput = document.createElement('input');
+                valueInput.type = 'number';
+                valueInput.className = 'data-value w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
+                valueInput.placeholder = 'Es. 150';
+                valueInput.value = value;
+                rowDiv.appendChild(labelInput);
+                rowDiv.appendChild(valueInput);
+                manualDataContainer.appendChild(rowDiv);
+            };
+            
+            addRowBtn.addEventListener('click', () => createDataRow());
+            for (let i = 0; i < 5; i++) { createDataRow(); }
+
             chartTypeSelectors.forEach(selector => selector.addEventListener('change', (e) => {
                 const isHistogram = e.target.value === 'histogram';
                 histogramOptions.style.display = isHistogram ? 'block' : 'none';
                 pieChartOptions.style.display = !isHistogram ? 'block' : 'none';
             }));
-            pieDonutToggle.addEventListener('change', () => pieDonutSizeContainer.style.display = pieDonutToggle.checked ? 'block' : 'none');
-            pieColorScheme.addEventListener('change', () => {
-                pieInvertColorsContainer.style.display = pieColorScheme.value === 'two' ? 'flex' : 'none';
-                pieMonoColorContainer.style.display = pieColorScheme.value === 'mono' ? 'block' : 'none';
-                document.getElementById('pie-smart-sort-container').style.display = ['multi', 'mono'].includes(pieColorScheme.value) ? 'flex' : 'none';
-                document.getElementById('pie-shuffle-colors-container').style.display = pieColorScheme.value === 'multi' ? 'flex' : 'none';
+            
+            document.getElementById('pie-donut-toggle').addEventListener('change', (e) => document.getElementById('pie-donut-size-container').style.display = e.target.checked ? 'block' : 'none');
+            document.getElementById('pie-label-format').addEventListener('change', (e) => document.getElementById('pie-decimals-container').style.display = e.target.value === 'percentage' ? 'block' : 'none');
+            document.getElementById('pie-color-scheme').addEventListener('change', (e) => {
+                const scheme = e.target.value;
+                document.getElementById('pie-invert-colors-container').style.display = scheme === 'two' ? 'flex' : 'none';
+                document.getElementById('pie-mono-color-container').style.display = scheme === 'mono' ? 'block' : 'none';
+                document.getElementById('pie-smart-sort-container').style.display = ['multi', 'mono'].includes(scheme) ? 'flex' : 'none';
+                document.getElementById('pie-shuffle-colors-container').style.display = scheme === 'multi' ? 'flex' : 'none';
             });
-            pieLabelFormat.addEventListener('change', () => pieDecimalsContainer.style.display = pieLabelFormat.value === 'percentage' ? 'block' : 'none');
 
             fileUpload.addEventListener('change', (event) => {
                 const file = event.target.files[0];
@@ -294,23 +369,50 @@
                     const sheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[sheetName];
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    dataPaste.value = jsonData.map(row => row.join('\t')).join('\n');
+                    
+                    manualDataContainer.innerHTML = '';
+                    jsonData.forEach(row => {
+                        if(row[0] || row[1]) { createDataRow(row[0] || '', row[1] || ''); }
+                    });
+                    toggleManualBtn.click();
                 };
                 reader.readAsArrayBuffer(file);
             });
             
             function parseData() {
-                const text = dataPaste.value.trim();
-                if (!text) { alert('Per favore, inserisci dei dati.'); return []; }
-                return text.split('\n').map(line => {
-                    const parts = line.split('\t');
-                    let rawLabel = parts[0] || '';
-                    const value = parseFloat(parts[1]) || 0;
-                    const highlight = rawLabel.startsWith('*') && rawLabel.endsWith('*');
-                    const cleanLabel = highlight ? rawLabel.substring(1, rawLabel.length - 1) : rawLabel;
-                    const labelParts = cleanLabel.split('*');
-                    return { rawLabel, labelParts, value, highlight };
-                }).filter(d => d.rawLabel && !isNaN(d.value));
+                const isPasteMode = pasteDataContainer.style.display !== 'none';
+                let data = [];
+
+                if (isPasteMode) {
+                    const text = dataPaste.value.trim();
+                    if (!text) { alert('Per favore, incolla dei dati nell\'area di testo.'); return []; }
+                    data = text.split('\n').map(line => {
+                        const parts = line.split('\t');
+                        let rawLabel = parts[0] || '';
+                        const value = parseFloat(parts[1]) || 0;
+                        const highlight = rawLabel.startsWith('*') && rawLabel.endsWith('*');
+                        const cleanLabel = highlight ? rawLabel.substring(1, rawLabel.length - 1) : rawLabel;
+                        const labelParts = cleanLabel.split('*');
+                        return { rawLabel, labelParts, value, highlight };
+                    }).filter(d => d.rawLabel && !isNaN(d.value));
+                } else {
+                    const dataRows = manualDataContainer.querySelectorAll('.data-row');
+                    dataRows.forEach(row => {
+                        const rawLabel = row.querySelector('.data-label').value.trim();
+                        const valueStr = row.querySelector('.data-value').value;
+                        
+                        if (rawLabel && valueStr) {
+                            const value = parseFloat(valueStr) || 0;
+                            const highlight = rawLabel.startsWith('*') && rawLabel.endsWith('*');
+                            const cleanLabel = highlight ? rawLabel.substring(1, rawLabel.length - 1) : rawLabel;
+                            const labelParts = cleanLabel.split('*');
+                            data.push({ rawLabel, labelParts, value, highlight });
+                        }
+                    });
+                }
+                
+                if (data.length === 0) { alert('Nessun dato valido trovato. Controlla l\'input.'); return []; }
+                return data;
             }
 
             generateBtn.addEventListener('click', () => {
@@ -341,7 +443,8 @@
                             const height = +document.getElementById('chart-height').value;
                             const fontSizeX = +document.getElementById('font-size-x').value;
                             const fontSizeY = +document.getElementById('font-size-y').value;
-                            drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle);
+                            const orientation = document.getElementById('chart-orientation').value;
+                            drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle, orientation);
                         } else {
                             const isDonut = document.getElementById('pie-donut-toggle').checked;
                             const donutSize = document.getElementById('pie-donut-size').value;
@@ -359,14 +462,14 @@
                         showButtonFeedback(generateBtn, 'Fatto!', true);
                     } catch (error) {
                          console.error("Errore durante la generazione del grafico:", error);
-                         chartContainer.innerHTML = `<p class="text-red-500 font-semibold">${error.message}</p>`;
+                         chartContainer.innerHTML = `<p class="text-red-500 font-semibold p-4">${error.message}</p>`;
                          showButtonFeedback(generateBtn, 'Errore', false, true);
                     }
                 }, 200);
             });
             
             function drawCommonTitle(svg, title, isHidden, fontSize) {
-                if (isHidden) return;
+                 if (isHidden) return;
                 const titleGroup = svg.append('g').attr('transform', `translate(30, 20)`);
                 titleGroup.append('text')
                     .attr('x', 0).attr('y', 0).attr('dy', '0.8em')
@@ -382,7 +485,8 @@
                     .attr('stroke', COLORS.titleBlue).attr('stroke-width', 2);
             }
 
-            function drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle) {
+            // MODIFICA: La funzione drawHistogram è stata aggiornata per correggere la posizione e lo stile delle griglie.
+            function drawHistogram(data, title, width, height, fontSizeAxis, fontSizeValues, hideTitle, fontSizeTitle, orientation) {
                 const svg = d3.select("#chart-container").append("svg")
                     .attr("width", width).attr("height", height)
                     .attr("viewBox", `0 0 ${width} ${height}`)
@@ -391,50 +495,118 @@
                 drawCommonTitle(svg, title, hideTitle, fontSizeTitle);
 
                 const titleHeight = hideTitle ? 20 : fontSizeTitle * 1.5 + 40;
-                const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
-                const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeX * 0.55);
-                const margin = { top: titleHeight, right: 30, bottom: dynamicBottomMargin, left: 60 };
                 
-                const innerWidth = width - margin.left - margin.right;
-                const innerHeight = height - margin.top - margin.bottom;
+                if (orientation === 'horizontal') {
+                    // Logica per GRAFICO A BARRE ORIZZONTALE
+                    const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
+                    const dynamicLeftMargin = Math.max(100, longestLabel.length * (fontSizeAxis * 0.6));
+                    const margin = { top: titleHeight, right: 50, bottom: 40, left: dynamicLeftMargin };
 
-                if (innerWidth <= 0 || innerHeight <= 0) {
-                    throw new Error("Spazio insufficiente per disegnare. Prova ad aumentare larghezza/altezza o a ridurre la dimensione dei font.");
+                    const innerWidth = width - margin.left - margin.right;
+                    const innerHeight = height - margin.top - margin.bottom;
+
+                    if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza o riduci i font.");
+
+                    const chartGroup = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+                    
+                    const y = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerHeight]).padding(0.4);
+                    const x = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([0, innerWidth]);
+
+                    // Griglia verticale (corretta e stilizzata)
+                    const grid = chartGroup.append("g").attr("class", "grid")
+                        .attr("transform", `translate(0, ${innerHeight})`)
+                        .call(d3.axisBottom(x).ticks(5).tickSize(-innerHeight).tickFormat(""));
+                    grid.select(".domain").remove();
+                    grid.selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-width", 0.5);
+                    
+                    // Asse Y (etichette a sinistra)
+                    const yAxis = chartGroup.append("g").call(d3.axisLeft(y).tickSize(0));
+                    yAxis.select(".domain").remove();
+                    yAxis.selectAll(".tick text").text(null).each(function(d) {
+                        const dataPoint = data.find(item => item.rawLabel === d);
+                        const labelParts = dataPoint ? dataPoint.labelParts : [d];
+                        d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan")
+                            .attr("x", -5).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
+                    });
+                    yAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+
+                    // Asse X (valori in basso)
+                    const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`)
+                        .call(d3.axisBottom(x).ticks(5).tickSize(0));
+                    xAxis.select(".domain").remove();
+                    xAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+                    
+                    // Barre
+                    chartGroup.selectAll(".bar").data(data).enter().append("rect")
+                        .attr("class", "bar").attr("y", d => y(d.rawLabel)).attr("x", 0)
+                        .attr("height", y.bandwidth()).attr("width", d => x(d.value))
+                        .attr("fill", d => d.highlight ? COLORS.titleBlue : COLORS.barBlue);
+
+                    // Etichette valore sulle barre
+                    chartGroup.selectAll(".bar-label").data(data).enter().append("text")
+                        .attr("class", "bar-label").attr("y", d => y(d.rawLabel) + y.bandwidth() / 2)
+                        .attr("x", d => x(d.value) + 5).attr("dominant-baseline", "middle")
+                        .style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", "900")
+                        .text(d => itLocale.format(".2s")(d.value).replace('G', 'B'));
+
+                } else {
+                    // Logica per ISTOGRAMMA VERTICALE
+                    const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
+                    const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeAxis * 0.55);
+                    const margin = { top: titleHeight, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                    
+                    const innerWidth = width - margin.left - margin.right;
+                    const innerHeight = height - margin.top - margin.bottom;
+
+                    if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza o riduci i font.");
+
+                    const chartGroup = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+                    const x = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerWidth]).padding(0.4);
+                    const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([innerHeight, 0]);
+                    
+                    // Griglia orizzontale (stilizzata)
+                    const grid = chartGroup.append("g").attr("class", "grid")
+                        .call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat(""));
+                    grid.select(".domain").remove();
+                    grid.selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-width", 0.5);
+                    
+                    // Asse X (etichette in basso)
+                    const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`)
+                        .call(d3.axisBottom(x).tickSize(0));
+                    xAxis.select(".domain").remove();
+                    xAxis.selectAll(".tick text").text(null).each(function(d) {
+                        const dataPoint = data.find(item => item.rawLabel === d);
+                        const labelParts = dataPoint ? dataPoint.labelParts : [d];
+                        d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", 0).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
+                    });
+                    xAxis.selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-45)").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+                    
+                    // Asse Y (valori a sinistra)
+                    const yAxis = chartGroup.append("g").call(d3.axisLeft(y).ticks(5).tickSize(0));
+                    yAxis.select(".domain").remove();
+                    yAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+                    
+                    // Barre
+                    chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? COLORS.titleBlue : COLORS.barBlue);
+                    
+                    // Etichette valore sulle barre
+                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => itLocale.format(".2s")(d.value).replace('G', 'B'));
                 }
-
-                const chartGroup = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
-                const x = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerWidth]).padding(0.4);
-                const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([innerHeight, 0]);
-                
-                chartGroup.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat("")).selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-dasharray", "2,2");
-                chartGroup.select(".domain").remove();
-                
-                const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x));
-                xAxis.selectAll(".tick text").text(null).each(function(d) {
-                    const dataPoint = data.find(item => item.rawLabel === d);
-                    const labelParts = dataPoint ? dataPoint.labelParts : [d];
-                    d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", 0).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
-                });
-                xAxis.selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-45)").style("font-size", `${fontSizeX}px`).style("fill", COLORS.axisGray);
-                
-                chartGroup.append("g").call(d3.axisLeft(y).ticks(5)).style("font-size", `${fontSizeY}px`).style("color", COLORS.axisGray);
-                chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? COLORS.titleBlue : COLORS.barBlue);
-                chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeX}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => itLocale.format(".2s")(d.value).replace('G', 'B'));
             }
-
+            
             function drawPieChart(data, title, hideTitle, fontSizeTitle, options) {
                 const { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels } = options;
                 
-                // *** INIZIO CODICE CORRETTO ***
+                d3.select("#chart-container").html("");
                 const canvasWidth = 1000;
-                const canvasHeight = 800; // Ridotta l'altezza per avvicinare il grafico
+                const canvasHeight = 800;
                 const radius = 280; 
                 
                 const svgContainer = d3.select("#chart-container").append("svg")
                     .attr("width", "100%")
                     .attr("height", "100%")
                     .attr("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`)
-                    .attr('preserveAspectRatio', 'xMidYMin meet'); // Allinea in alto e al centro
+                    .attr('preserveAspectRatio', 'xMidYMin meet'); 
 
                 drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
 
@@ -442,7 +614,6 @@
 
                 const pieGroup = svgContainer.append('g')
                     .attr('transform', `translate(${canvasWidth / 2}, ${topMargin + radius})`);
-                // *** FINE CODICE CORRETTO ***
 
                 let sortedData = [...data];
                 let colorSchemeOrScale;
@@ -505,11 +676,8 @@
                         d.data.labelParts.forEach((part, i) => el.append('tspan').attr('x', 0).attr('dy', i === 0 ? 0 : '1.2em').text(part).style('font-size', `${pieFontSizeLabels}px`).style('font-weight', '700').style('fill', COLORS.titleBlue));
                         el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${pieFontSizeLabels - 2}px`).style('font-weight', '400').style('fill', COLORS.titleBlue);
                     });
-                
-                // La logica di scaling e centraggio dinamico è stata rimossa.
             }
 
-            // --- HELPERS E FUNZIONI DI SERVIZIO ---
             function getSvgString() {
                 const svgNode = chartContainer.querySelector('svg');
                 if (!svgNode) return null;
@@ -518,7 +686,7 @@
                 return new XMLSerializer().serializeToString(clone);
             }
             downloadBtn.addEventListener('click', () => {
-                const svgString = getSvgString();
+                 const svgString = getSvgString();
                 if (!svgString) return;
                 const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
                 const url = URL.createObjectURL(blob);
@@ -543,8 +711,7 @@
                  else if (success) button.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition-all';
                  setTimeout(() => { button.textContent = originalText; button.className = originalClasses; }, 2000);
             }
-            function getSettings(){ /* ... */ }
-            function applySettings(settings){ /* ... */ }
+            
             saveSettingsBtn.addEventListener('click', () => showButtonFeedback(saveSettingsBtn, 'Non implementato'));
             loadSettingsInput.addEventListener('change', () => showButtonFeedback(loadSettingsInput, 'Non implementato'));
         });
