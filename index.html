@@ -93,7 +93,7 @@
                     
                     <div id="paste-data-container">
                         <label for="data-paste" class="block text-sm font-medium text-gray-700 mb-1">Incolla dati (Label [TAB] Valore)</label>
-                        <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Servizi*Finanziari	150&#10;Febbraio	200&#10;*Marzo*	120"></textarea>
+                        <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Territorio	907.552&#10;Prodotti e servizi	781.643&#10;Filatelia	534.540"></textarea>
                     </div>
 
                     <div id="manual-entry-wrapper" style="display: none;">
@@ -138,6 +138,12 @@
                             <option value="yellow" data-main="#eedf4a" data-highlight="#faee80">Giallo</option>
                         </select>
                     </div>
+                    <div id="histogram-yellow-outline-container" class="pl-2" style="display: none;">
+                        <div class="flex items-center">
+                            <input id="histogram-yellow-outline" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="histogram-yellow-outline" class="ml-2 block text-sm text-gray-900">Aggiungi outline blu</label>
+                        </div>
+                    </div>
                     <div>
                         <label for="chart-orientation" class="block text-sm font-medium text-gray-700">Orientamento</label>
                         <select id="chart-orientation" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
@@ -153,6 +159,23 @@
                         <div>
                             <label for="font-size-y" class="block text-sm font-medium text-gray-700">Font Valori (px)</label>
                             <input type="number" id="font-size-y" value="12" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <label for="histogram-decimals" class="block text-sm font-medium text-gray-700">Decimali Valori</label>
+                            <select id="histogram-decimals" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="0">0</option>
+                                <option value="1">1</option>
+                                <option value="2" selected>2</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="histogram-label-weight" class="block text-sm font-medium text-gray-700">Stile Valori</label>
+                            <select id="histogram-label-weight" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <option value="900" selected>Bold</option>
+                                <option value="400">Light</option>
+                            </select>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -241,9 +264,18 @@
                         </select>
                     </div>
                      <div class="pt-2">
-                         <div>
-                            <label for="pie-font-size-labels" class="block text-sm font-medium text-gray-700">Font Etichette (px)</label>
-                            <input type="number" id="pie-font-size-labels" value="28" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                         <div class="grid grid-cols-2 gap-4">
+                             <div>
+                                <label for="pie-font-size-labels" class="block text-sm font-medium text-gray-700">Font Etichette (px)</label>
+                                <input type="number" id="pie-font-size-labels" value="28" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label for="pie-label-weight" class="block text-sm font-medium text-gray-700">Stile Valori</label>
+                                <select id="pie-label-weight" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="900">Bold</option>
+                                    <option value="400" selected>Light</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -305,6 +337,8 @@
             const pieColorScheme = document.getElementById('pie-color-scheme');
             const pieTwoColorContainer = document.getElementById('pie-two-color-container');
             const pieMonoColorSelect = document.getElementById('pie-mono-color');
+            const histogramColorScheme = document.getElementById('histogram-color-scheme');
+            const histogramYellowOutlineContainer = document.getElementById('histogram-yellow-outline-container');
 
             const COLORS = {
                 titleBlue: '#0431AE', barBlue: '#bfd7fd', axisGray: '#7b7b7a', gridGray: '#e0e0e0',
@@ -338,6 +372,7 @@
                 Array.from(select.options).forEach(option => {
                     const mainColor = option.dataset.main;
                     const highlightColor = option.dataset.highlight;
+                    if (!mainColor || !highlightColor) return;
                     option.style.background = `linear-gradient(to right, ${mainColor} 70%, ${highlightColor} 30%)`;
                     const hex = highlightColor.replace('#', '');
                     const r = parseInt(hex.substring(0, 2), 16), g = parseInt(hex.substring(2, 4), 16), b = parseInt(hex.substring(4, 6), 16);
@@ -350,6 +385,10 @@
             };
             styleColorSelector('histogram-color-scheme');
             styleColorSelector('pie-two-color-scheme');
+            
+            histogramColorScheme.addEventListener('change', (e) => {
+                histogramYellowOutlineContainer.style.display = e.target.value === 'yellow' ? 'block' : 'none';
+            });
 
             togglePasteBtn.addEventListener('click', () => {
                 pasteDataContainer.style.display = 'block';
@@ -394,7 +433,6 @@
             });
             
             document.getElementById('pie-donut-toggle').addEventListener('change', (e) => document.getElementById('pie-donut-size-container').style.display = e.target.checked ? 'block' : 'none');
-            document.getElementById('pie-label-format').addEventListener('change', (e) => document.getElementById('pie-decimals-container').style.display = e.target.value === 'percentage' ? 'block' : 'none');
             
             pieColorScheme.addEventListener('change', (e) => {
                 const scheme = e.target.value;
@@ -425,6 +463,13 @@
                 reader.readAsArrayBuffer(file);
             });
             
+            function parseItalianNumber(numStr) {
+                if (typeof numStr !== 'string' || !numStr) return 0;
+                // Rimuove tutti i punti (separatori migliaia) e poi sostituisce la virgola con il punto per i decimali
+                const cleanedStr = numStr.replace(/\./g, '').replace(/,/g, '.');
+                return parseFloat(cleanedStr) || 0;
+            }
+
             function parseData() {
                 const isPasteMode = pasteDataContainer.style.display !== 'none';
                 let data = [];
@@ -434,7 +479,7 @@
                     data = text.split('\n').map(line => {
                         const parts = line.split('\t');
                         let rawLabel = parts[0] || '';
-                        const value = parseFloat(parts[1]) || 0;
+                        const value = parseItalianNumber(parts[1]);
                         const highlight = rawLabel.startsWith('*') && rawLabel.endsWith('*');
                         const cleanLabel = highlight ? rawLabel.substring(1, rawLabel.length - 1) : rawLabel;
                         const labelParts = cleanLabel.split('*');
@@ -457,6 +502,21 @@
                 }
                 if (data.length === 0) { alert('Nessun dato valido trovato. Controlla l\'input.'); return []; }
                 return data;
+            }
+
+            function formatItalianNumber(num, decimals) {
+                if (isNaN(num)) return num;
+                const formatSpecifier = `,.${decimals}f`;
+                if (Math.abs(num) >= 1_000_000_000) {
+                    return itLocale.format(formatSpecifier)(num / 1_000_000_000) + '\u00A0Mld';
+                }
+                if (Math.abs(num) >= 1_000_000) {
+                    return itLocale.format(formatSpecifier)(num / 1_000_000) + '\u00A0M';
+                }
+                if (Math.abs(num) >= 1_000) {
+                    return itLocale.format(formatSpecifier)(num / 1_000) + '\u00A0K';
+                }
+                return itLocale.format(formatSpecifier)(num);
             }
 
             generateBtn.addEventListener('click', () => {
@@ -526,13 +586,18 @@
             }
 
             function drawHistogram(data, title, width, height, fontSizeAxis, fontSizeValues, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor) {
+                const addBlueOutline = document.getElementById('histogram-color-scheme').value === 'yellow' && document.getElementById('histogram-yellow-outline').checked;
+                const numDecimals = +document.getElementById('histogram-decimals').value;
+                const labelWeight = document.getElementById('histogram-label-weight').value;
+                
                 const svg = d3.select("#chart-container").append("svg").attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`).style("background-color", "transparent");
                 drawCommonTitle(svg, title, hideTitle, fontSizeTitle);
                 const titleHeight = hideTitle ? 20 : fontSizeTitle * 1.5 + 40;
+                
                 if (orientation === 'horizontal') {
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicLeftMargin = Math.max(100, longestLabel.length * (fontSizeAxis * 0.6));
-                    const margin = { top: titleHeight, right: 50, bottom: 40, left: dynamicLeftMargin };
+                    const margin = { top: titleHeight, right: 80, bottom: 40, left: dynamicLeftMargin };
                     const innerWidth = width - margin.left - margin.right;
                     const innerHeight = height - margin.top - margin.bottom;
                     if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza o riduci i font.");
@@ -550,11 +615,11 @@
                         d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", -5).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
                     });
                     yAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
-                    const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(0));
+                    const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(0).tickFormat(d => formatItalianNumber(d, 0)));
                     xAxis.select(".domain").remove();
                     xAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
-                    chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("y", d => y(d.rawLabel)).attr("x", 0).attr("height", y.bandwidth()).attr("width", d => x(d.value)).attr("fill", d => d.highlight ? highlightColor : mainColor);
-                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("y", d => y(d.rawLabel) + y.bandwidth() / 2).attr("x", d => x(d.value) + 5).attr("dominant-baseline", "middle").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => itLocale.format(".2s")(d.value).replace('G', 'B'));
+                    chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("y", d => y(d.rawLabel)).attr("x", 0).attr("height", y.bandwidth()).attr("width", d => x(d.value)).attr("fill", d => d.highlight ? highlightColor : mainColor).attr("stroke", addBlueOutline ? COLORS.titleBlue : 'none').attr("stroke-width", addBlueOutline ? 1 : 0);
+                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("y", d => y(d.rawLabel) + y.bandwidth() / 2).attr("x", d => x(d.value) + 5).attr("dominant-baseline", "middle").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", labelWeight).text(d => formatItalianNumber(d.value, numDecimals));
                 } else {
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeAxis * 0.55);
@@ -576,16 +641,18 @@
                         d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", 0).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
                     });
                     xAxis.selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-45)").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
-                    const yAxis = chartGroup.append("g").call(d3.axisLeft(y).ticks(5).tickSize(0));
+                    const yAxis = chartGroup.append("g").call(d3.axisLeft(y).ticks(5).tickSize(0).tickFormat(d => formatItalianNumber(d, 0)));
                     yAxis.select(".domain").remove();
                     yAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
-                    chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? highlightColor : mainColor);
-                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", "900").text(d => itLocale.format(".2s")(d.value).replace('G', 'B'));
+                    chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? highlightColor : mainColor).attr("stroke", addBlueOutline ? COLORS.titleBlue : 'none').attr("stroke-width", addBlueOutline ? 1 : 0);
+                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", labelWeight).text(d => formatItalianNumber(d.value, numDecimals));
                 }
             }
             
             function drawPieChart(data, title, hideTitle, fontSizeTitle, options) {
                 const { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels } = options;
+                const labelWeight = document.getElementById('pie-label-weight').value;
+
                 d3.select("#chart-container").html("");
                 const canvasWidth = 1000, canvasHeight = 800, radius = 280; 
                 const svgContainer = d3.select("#chart-container").append("svg").attr("width", "100%").attr("height", "100%").attr("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`).attr('preserveAspectRatio', 'xMidYMin meet'); 
@@ -641,10 +708,12 @@
                 pieGroup.selectAll('text').data(data_ready).join('text').attr('transform', d => `translate(${radius * 1.2 * ((d.startAngle + d.endAngle) / 2 < Math.PI ? 1 : -1)}, ${outerArc.centroid(d)[1]})`).style('text-anchor', d => (d.startAngle + d.endAngle) / 2 < Math.PI ? 'start' : 'end').each(function(d) {
                     const el = d3.select(this);
                     const total = d3.sum(data.map(item => item.value));
-                    const labelValue = labelFormat === 'percentage' ? itLocale.format(`.${decimalPlaces}f`)(total === 0 ? 0 : (d.data.value / total * 100)) + '%' : itLocale.format(",")(d.data.value);
+                    const labelValue = labelFormat === 'percentage'
+                        ? itLocale.format(`.${decimalPlaces}f`)(total === 0 ? 0 : (d.data.value / total * 100)) + '%'
+                        : formatItalianNumber(d.data.value, decimalPlaces);
                     el.selectAll('*').remove();
                     d.data.labelParts.forEach((part, i) => el.append('tspan').attr('x', 0).attr('dy', i === 0 ? 0 : '1.2em').text(part).style('font-size', `${pieFontSizeLabels}px`).style('font-weight', '700').style('fill', COLORS.titleBlue));
-                    el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${pieFontSizeLabels - 2}px`).style('font-weight', '400').style('fill', COLORS.titleBlue);
+                    el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${pieFontSizeLabels - 2}px`).style('font-weight', labelWeight).style('fill', COLORS.titleBlue);
                 });
             }
 
