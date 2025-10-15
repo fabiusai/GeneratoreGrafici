@@ -641,7 +641,7 @@
                         const labelParts = dataPoint ? dataPoint.labelParts : [d];
                         d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", -5).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
                     });
-                    yAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+                    yAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray).style("dominant-baseline", "middle");
                     const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(0).tickFormat(axisTickFormatter));
                     xAxis.select(".domain").remove();
                     xAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
