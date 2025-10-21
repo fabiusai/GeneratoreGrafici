@@ -151,6 +151,10 @@
                             <option value="horizontal">Orizzontale</option>
                         </select>
                     </div>
+                     <div class="flex items-center pl-1 pt-1">
+                        <input id="hide-value-axis-toggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                        <label for="hide-value-axis-toggle" class="ml-2 block text-sm text-gray-900">Nascondi asse valori (solo orizz.)</label>
+                    </div>
                     <div class="grid grid-cols-2 gap-4">
                          <div>
                             <label for="font-size-x" class="block text-sm font-medium text-gray-700">Font Assi (px)</label>
@@ -521,6 +525,7 @@
             function formatAxisValueWithOptionalDecimal(num) {
                 let value = num;
                 let suffix = '';
+                let decimals = 0; // Default to 0 decimals
 
                 if (Math.abs(num) >= 1_000_000_000) {
                     value = num / 1_000_000_000;
@@ -533,11 +538,14 @@
                     suffix = '\u00A0K';
                 }
                 
-                if (Math.abs(value - Math.round(value)) < 1e-6) {
-                    return itLocale.format(',.0f')(value) + suffix;
-                } else {
-                    return itLocale.format(',.1f')(value) + suffix;
+                // Check if the non-integer part is significant (not very close to 0 or 1)
+                if (Math.abs(value - Math.round(value)) > 1e-6) {
+                   decimals = 1; // Use 1 decimal if there's a fractional part
                 }
+                
+                const formatSpecifier = `,.${decimals}f`;
+                return itLocale.format(formatSpecifier)(value) + suffix;
+
             }
 
             generateBtn.addEventListener('click', () => {
@@ -569,13 +577,14 @@
                             const fontSizeX = +document.getElementById('font-size-x').value;
                             const fontSizeY = +document.getElementById('font-size-y').value;
                             const orientation = document.getElementById('chart-orientation').value;
+                            const hideValueAxis = document.getElementById('hide-value-axis-toggle').checked;
 
                             const colorSelect = document.getElementById('histogram-color-scheme');
                             const selectedOption = colorSelect.options[colorSelect.selectedIndex];
                             const mainColor = selectedOption.dataset.main;
                             const highlightColor = selectedOption.dataset.highlight;
 
-                            drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor);
+                            drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor, hideValueAxis);
                         } else {
                             const isDonut = document.getElementById('pie-donut-toggle').checked;
                             const donutSize = document.getElementById('pie-donut-size').value;
@@ -606,7 +615,7 @@
                 titleGroup.append('line').attr('x1', 0).attr('x2', 400).attr('y1', fontSize * 1.1).attr('y2', fontSize * 1.1).attr('stroke', COLORS.titleBlue).attr('stroke-width', 2);
             }
 
-            function drawHistogram(data, title, width, height, fontSizeAxis, fontSizeValues, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor) {
+            function drawHistogram(data, title, width, height, fontSizeAxis, fontSizeValues, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor, hideValueAxis) {
                 const addBlueOutline = document.getElementById('histogram-color-scheme').value === 'yellow' && document.getElementById('histogram-yellow-outline').checked;
                 const numDecimals = +document.getElementById('histogram-decimals').value;
                 const labelWeight = document.getElementById('histogram-label-weight').value;
@@ -618,7 +627,9 @@
                 if (orientation === 'horizontal') {
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicLeftMargin = Math.max(100, longestLabel.length * (fontSizeAxis * 0.6));
-                    const margin = { top: titleHeight, right: 80, bottom: 40, left: dynamicLeftMargin };
+                    // Adjust bottom margin if value axis is hidden
+                    const bottomMargin = hideValueAxis ? 20 : 40; 
+                    const margin = { top: titleHeight, right: 80, bottom: bottomMargin, left: dynamicLeftMargin };
                     const innerWidth = width - margin.left - margin.right;
                     const innerHeight = height - margin.top - margin.bottom;
                     if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza o riduci i font.");
@@ -634,20 +645,50 @@
                     const grid = chartGroup.append("g").attr("class", "grid").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(-innerHeight).tickFormat(""));
                     grid.select(".domain").remove();
                     grid.selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-width", 0.5);
+                    
                     const yAxis = chartGroup.append("g").call(d3.axisLeft(y).tickSize(0));
                     yAxis.select(".domain").remove();
-                    yAxis.selectAll(".tick text").text(null).each(function(d) {
-                        const dataPoint = data.find(item => item.rawLabel === d);
-                        const labelParts = dataPoint ? dataPoint.labelParts : [d];
-                        d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", -5).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
-                    });
-                    yAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray).style("dominant-baseline", "middle");
-                    const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(0).tickFormat(axisTickFormatter));
-                    xAxis.select(".domain").remove();
-                    xAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+                    
+                    yAxis.selectAll(".tick text")
+                        .attr("dy", null) // Remove potential previous dy
+                        .attr("y", null) // Remove potential previous y if any
+                        .text(null) // Clear existing text/tspans first
+                        .each(function(d) {
+                            const dataPoint = data.find(item => item.rawLabel === d);
+                            const labelParts = dataPoint ? dataPoint.labelParts : [d];
+                            // Calculate dy to vertically center based on line height (1.2em) and number of lines
+                            const initialDyOffset = (labelParts.length - 1) / 2; // N lines -> (N-1)/2 offset
+                            const initialDy = `${0.35 - initialDyOffset * 1.2}em`; // 0.35em is approx middle for single line
+
+                            d3.select(this).selectAll("tspan")
+                                .data(labelParts)
+                                .enter()
+                                .append("tspan")
+                                .attr("x", -5)
+                                .attr("dy", (part, i) => i === 0 ? initialDy : "1.2em") 
+                                .text(part => part);
+                        })
+                        .style("font-size", `${fontSizeAxis}px`)
+                        .style("fill", COLORS.axisGray)
+                        .style("text-anchor", "end"); 
+
+                    if (!hideValueAxis) {
+                        const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(0).tickFormat(axisTickFormatter));
+                        xAxis.select(".domain").remove();
+                        xAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+                    }
+                    
                     chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("y", d => y(d.rawLabel)).attr("x", 0).attr("height", y.bandwidth()).attr("width", d => x(d.value)).attr("fill", d => d.highlight ? highlightColor : mainColor).attr("stroke", addBlueOutline ? COLORS.titleBlue : 'none').attr("stroke-width", addBlueOutline ? 1 : 0);
-                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("y", d => y(d.rawLabel) + y.bandwidth() / 2).attr("x", d => x(d.value) + 5).attr("dominant-baseline", "middle").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", labelWeight).text(d => formatItalianNumber(d.value, numDecimals));
-                } else {
+                    
+                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label")
+                        .attr("y", d => y(d.rawLabel) + y.bandwidth() / 2)
+                        .attr("x", d => x(d.value) + 5)
+                        .attr("dy", "0.35em") // Use dy for better vertical centering
+                        .style("font-size", `${fontSizeValues}px`)
+                        .style("fill", COLORS.titleBlue)
+                        .style("font-weight", labelWeight)
+                        .text(d => formatItalianNumber(d.value, numDecimals));
+                } else { // Vertical Orientation
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeAxis * 0.55);
                     const margin = { top: titleHeight, right: 30, bottom: dynamicBottomMargin, left: 60 };
