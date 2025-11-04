@@ -267,6 +267,15 @@
                             <option value="2">2</option>
                         </select>
                     </div>
+                     
+                    <div>
+                        <label for="pie-label-color" class="block text-sm font-medium text-gray-700">Colore Etichette</label>
+                        <select id="pie-label-color" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <option value="blue" selected>Blu (Default)</option>
+                            <option value="gray">Grigio</option>
+                        </select>
+                    </div>
+
                      <div class="pt-2">
                          <div class="grid grid-cols-2 gap-4">
                              <div>
@@ -274,10 +283,10 @@
                                 <input type="number" id="pie-font-size-labels" value="28" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div>
-                                <label for="pie-label-weight" class="block text-sm font-medium text-gray-700">Stile Valori</label>
+                                <label for="pie-label-weight" class="block text-sm font-medium text-gray-700">Stile Etichette</label>
                                 <select id="pie-label-weight" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="900">Bold</option>
-                                    <option value="400" selected>Light</option>
+                                    <option value="900">Grassetto</option>
+                                    <option value="400" selected>Normale</option>
                                 </select>
                             </div>
                         </div>
@@ -344,11 +353,15 @@
             const histogramColorScheme = document.getElementById('histogram-color-scheme');
             const histogramYellowOutlineContainer = document.getElementById('histogram-yellow-outline-container');
 
+            // *** MODIFICA QUI ***
             const COLORS = {
                 titleBlue: '#0431AE', barBlue: '#bfd7fd', axisGray: '#7b7b7a', gridGray: '#e0e0e0',
+                labelGray: '#7b7b7a', // Grigio etichette
                 sentiment: { positive: '#28a745', neutral: '#ffc107', negative: '#dc3545' },
                 multiPie: ['#1a2b92', '#1733ae', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc']
             };
+            // *** FINE MODIFICA ***
+
             const itLocale = d3.formatLocale({ decimal: ",", thousands: ".", grouping: [3], currency: ["€", ""] });
             
             const monoPieColors = [
@@ -725,7 +738,10 @@
             
             function drawPieChart(data, title, hideTitle, fontSizeTitle, options) {
                 const { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels } = options;
+                
                 const labelWeight = document.getElementById('pie-label-weight').value;
+                const labelColorChoice = document.getElementById('pie-label-color').value;
+                const finalLabelColor = labelColorChoice === 'gray' ? COLORS.labelGray : COLORS.titleBlue;
 
                 d3.select("#chart-container").html("");
                 const canvasWidth = 1000, canvasHeight = 800, radius = 280; 
@@ -786,8 +802,22 @@
                         ? itLocale.format(`.${decimalPlaces}f`)(total === 0 ? 0 : (d.data.value / total * 100)) + '%'
                         : formatItalianNumber(d.data.value, decimalPlaces);
                     el.selectAll('*').remove();
-                    d.data.labelParts.forEach((part, i) => el.append('tspan').attr('x', 0).attr('dy', i === 0 ? 0 : '1.2em').text(part).style('font-size', `${pieFontSizeLabels}px`).style('font-weight', '700').style('fill', COLORS.titleBlue));
-                    el.append('tspan').attr('x', 0).attr('dy', '1.2em').text(labelValue).style('font-size', `${pieFontSizeLabels - 2}px`).style('font-weight', labelWeight).style('fill', COLORS.titleBlue);
+                    
+                    d.data.labelParts.forEach((part, i) => el.append('tspan')
+                        .attr('x', 0)
+                        .attr('dy', i === 0 ? 0 : '1.2em')
+                        .text(part)
+                        .style('font-size', `${pieFontSizeLabels}px`)
+                        .style('font-weight', labelWeight) // Applica peso
+                        .style('fill', finalLabelColor)); // Applica colore
+                    
+                    el.append('tspan')
+                        .attr('x', 0)
+                        .attr('dy', '1.2em')
+                        .text(labelValue)
+                        .style('font-size', `${pieFontSizeLabels - 2}px`)
+                        .style('font-weight', labelWeight) // Applica peso
+                        .style('fill', finalLabelColor); // Applica colore
                 });
             }
 
