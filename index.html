@@ -877,15 +877,16 @@
                 const finalLabelColor = labelColorChoice === 'gray' ? COLORS.labelGray : COLORS.titleBlue;
 
                 d3.select("#chart-container").html("");
-                const canvasWidth = 1000, canvasHeight = 900; // AUMENTATO PER EVITARE TAGLI
-                const radius = 250; // RIDOTTO PER DARE PIÙ SPAZIO ALLE ETICHETTE
+                const canvasWidth = 800, canvasHeight = 1100; // Increased height
+                const radius = 210; // Keep radius moderate
                 const svgContainer = d3.select("#chart-container").append("svg").attr("width", "100%").attr("height", "100%").attr("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`).attr('preserveAspectRatio', 'xMidYMin meet'); 
                 drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
-                const topMargin = hideTitle ? 50 : fontSizeTitle * 1.5 + 80;
-                const pieGroup = svgContainer.append('g').attr('transform', `translate(${canvasWidth / 2}, ${topMargin + radius})`);
+                
+                // Center vertically in the new height
+                const pieGroup = svgContainer.append('g').attr('transform', `translate(${canvasWidth / 2}, ${canvasHeight / 2 + 20})`);
                 
                 let sortedData = [...data];
-                // SMART SORT: Algoritmo "Zipper" (Grande, Piccolo, Grande, Piccolo...)
+                // SMART SORT: Algoritmo "Zipper"
                 if (smartSort && activeVisualShuffleIndices === null) {
                     const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
                     const reordered = [];
@@ -929,81 +930,112 @@
                 const sizeMap = { stretto: 0.75, medio: 0.6, largo: 0.45 };
                 const innerRadius = isDonut ? radius * (sizeMap[donutSize] || 0.6) : 0;
                 
-                // Sort null perché abbiamo già ordinato manualmente
                 const pie = d3.pie().value(d => d.value).sort(null); 
                 const data_ready = pie(sortedData);
                 const arc = d3.arc().innerRadius(innerRadius).outerRadius(radius);
                 const outerArc = d3.arc().innerRadius(radius * 1.1).outerRadius(radius * 1.1);
                 
-                // Disegna Archi
-                pieGroup.selectAll('path')
-                    .data(data_ready)
-                    .join('path')
-                    .attr('d', arc)
-                    .attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.data.value) : colorSchemeOrScale[i % colorSchemeOrScale.length])
-                    .style('stroke', 'white')
-                    .style('stroke-width', '3px');
+                pieGroup.selectAll('path').data(data_ready).join('path').attr('d', arc).attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.data.value) : colorSchemeOrScale[i % colorSchemeOrScale.length]).style('stroke', 'white').style('stroke-width', '3px');
                 
-                // --- SISTEMA ETICHETTE CON LINEE CLASSICHE ---
-                const textRadius = radius * 1.35; 
-                const separation = pieFontSizeLabels + 6; // Spazio minimo verticale
+                // --- NUOVO SISTEMA ETICHETTE FISICO + STAGGERING ---
+                const baseTextRadius = radius * 1.15;
+                const farTextRadius = radius * 1.45; // Secondo livello per etichette dense
+                const minDistance = pieFontSizeLabels + 6; 
 
-                // 1. Calcola posizioni iniziali
+                // 1. Inizializzazione Etichette
                 const labels = data_ready.map(d => {
                     const midAngle = (d.startAngle + d.endAngle) / 2;
                     const posOuter = outerArc.centroid(d);
-                    // Calcolo posizione ideale dell'etichetta
-                    const x = textRadius * (midAngle < Math.PI ? 1 : -1);
-                    const y = posOuter[1]; // Partiamo dalla Y naturale
+                    const isRight = (midAngle < Math.PI);
                     return {
                         d: d,
                         midAngle: midAngle,
-                        posOuter: posOuter,
-                        idealY: y,
-                        finalY: y, // Sarà modificata dal relax
-                        x: x,
-                        isRight: (midAngle < Math.PI)
+                        y: posOuter[1], // Y iniziale
+                        xSign: isRight ? 1 : -1,
+                        isRight: isRight,
+                        radius: baseTextRadius, // Default raggio corto
+                        staggered: false
                     };
                 });
 
-                // 2. Risolvi Collisioni (Relax)
-                const relax = (items) => {
-                    items.sort((a,b) => a.idealY - b.idealY);
-                    for (let i = 1; i < items.length; i++) {
-                        const prev = items[i - 1];
-                        const curr = items[i];
-                        if (curr.finalY < prev.finalY + separation) {
-                            curr.finalY = prev.finalY + separation;
+                // 2. Rilassamento + Staggering Automatico
+                const relaxLabels = (items) => {
+                    items.sort((a, b) => a.y - b.y);
+                    let iterations = 0;
+                    let changed = true;
+                    
+                    while (changed && iterations < 50) {
+                        changed = false;
+                        iterations++;
+                        
+                        // Check Overlaps
+                        for (let i = 0; i < items.length - 1; i++) {
+                            const a = items[i];
+                            const b = items[i + 1];
+                            const dist = b.y - a.y;
+                            
+                            if (dist < minDistance) {
+                                // Se troppo vicini, spingiamoli verticalmente
+                                const overlap = minDistance - dist;
+                                const move = overlap / 2;
+                                a.y -= move;
+                                b.y += move;
+                                changed = true;
+
+                                // STAGGERING: Se sono ancora molto vicini o l'overlap era grande,
+                                // sposta uno dei due su un raggio più esterno (Stagger)
+                                // Questo permette visivamente di distinguerli meglio anche se le Y sono vicine
+                                if (!a.staggered && !b.staggered && dist < minDistance * 0.8) {
+                                    // Alterna: sposta quello "sotto" (o sopra) all'esterno
+                                    b.radius = farTextRadius; 
+                                    b.staggered = true;
+                                }
+                            }
+                        }
+
+                        // Boundary Check (Anti-Taglio)
+                        // Limiti relativi al centro del gruppo (che è a canvasHeight/2)
+                        const topLimit = - (canvasHeight / 2) + 40; 
+                        const bottomLimit = (canvasHeight / 2) - 40;
+
+                        if (items.length > 0) {
+                            if (items[0].y < topLimit) {
+                                const diff = topLimit - items[0].y;
+                                items.forEach(item => item.y += diff); 
+                                changed = true;
+                            }
+                            if (items[items.length - 1].y > bottomLimit) {
+                                const diff = items[items.length - 1].y - bottomLimit;
+                                items.forEach(item => item.y -= diff);
+                                changed = true;
+                            }
                         }
                     }
                 };
-                
-                relax(labels.filter(d => d.isRight));
-                relax(labels.filter(d => !d.isRight));
 
-                // 3. Disegna Polilinee CLASSICHE (3 punti)
+                relaxLabels(labels.filter(d => d.isRight));
+                relaxLabels(labels.filter(d => !d.isRight));
+
+                // 3. Disegno Linee (Adattive)
                 pieGroup.selectAll('polyline')
                     .data(labels)
                     .join('polyline')
                     .attr('points', d => {
-                        const start = arc.centroid(d.d); // Centro fetta
-                        const breakPoint = outerArc.centroid(d.d); // Punto di rottura sul bordo
-                        const end = [d.isRight ? textRadius : -textRadius, d.finalY]; // Fine sull'etichetta (spostata da relax)
-                        
-                        // Creiamo una linea più morbida che segue lo spostamento Y
-                        // Se l'etichetta è stata spostata molto, il breakPoint deve adattarsi leggermente
-                        // Ma per lo stile classico "dritto" teniamo i 3 punti fissi
-                        return [start, breakPoint, end];
+                        const start = arc.centroid(d.d);
+                        const breakPoint = outerArc.centroid(d.d);
+                        // Il punto finale usa il raggio dinamico (corto o lungo)
+                        const endX = d.radius * d.xSign;
+                        return [start, breakPoint, [endX, d.y]];
                     })
                     .style('fill', 'none')
                     .attr('stroke', '#444')
                     .attr('stroke-width', 1);
 
-                // 4. Disegna Testo
+                // 4. Disegno Testo
                 pieGroup.selectAll('text')
                     .data(labels)
                     .join('text')
-                    .attr('transform', d => `translate(${d.isRight ? textRadius + 5 : -textRadius - 5}, ${d.finalY})`)
+                    .attr('transform', d => `translate(${ (d.radius + 10) * d.xSign }, ${d.y})`)
                     .style('text-anchor', d => d.isRight ? 'start' : 'end')
                     .each(function(d) {
                         const el = d3.select(this);
@@ -1014,12 +1046,9 @@
                             : formatItalianNumber(dataItem.value, decimalPlaces);
                         
                         el.selectAll('*').remove();
-                        
-                        // Centratura verticale
                         const linesCount = dataItem.labelParts.length + 1;
                         const lineHeight = 1.1; 
-                        const totalHeightEm = linesCount * lineHeight;
-                        const startDy = -(totalHeightEm / 2) + 0.8; 
+                        const startDy = -((linesCount * lineHeight) / 2) + 0.8; 
 
                         dataItem.labelParts.forEach((part, i) => {
                             el.append('tspan')
