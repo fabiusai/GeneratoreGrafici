@@ -20,6 +20,8 @@
         .brand-blue { background-color: #0431AE; }
         .text-brand-blue { color: #0431AE; }
         .border-brand-blue { border-color: #0431AE; }
+        
+        /* Stili Radio Button Grafici */
         .custom-radio input[type="radio"] { display: none; }
         .custom-radio label { transition: all 0.2s ease-in-out; }
         .custom-radio input[type="radio"]:checked + label {
@@ -30,261 +32,365 @@
         }
         svg text { user-select: none; }
         
+        /* Bottoni Toggle */
         .input-toggle-btn.active {
             background-color: #e0e7ff;
             color: #0431AE;
             font-weight: 700;
             border-color: #0431AE;
+            z-index: 10;
         }
         .input-toggle-btn.inactive {
             background-color: #f8f9fa;
             color: #6c757d;
             border-color: #dee2e6;
         }
+
+        /* --- STILI TABELLA TIPO EXCEL (GRID) --- */
+        #manual-data-container {
+            border: 1px solid #9ca3af; /* Bordo esterno scuro */
+            background-color: #fff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .data-row {
+            display: flex;
+            width: 100%;
+            border-bottom: 1px solid #cbd5e1; /* Linea orizzontale marcata */
+        }
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        
+        /* Stile per gli input dentro le celle */
+        .data-row input {
+            border: none;
+            border-radius: 0;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            outline: none;
+            background: transparent;
+            transition: background 0.2s;
+        }
+
+        /* Linea verticale separatrice tra Etichetta e Valore */
+        .data-row .data-label {
+            border-right: 1px solid #cbd5e1; 
+            background-color: #fff;
+        }
+        .data-row .data-value {
+            background-color: #fff;
+        }
+
+        /* Effetto focus ed hover */
+        .data-row input:focus {
+            background-color: #eff6ff; /* Azzurrino chiaro */
+            box-shadow: inset 0 0 0 2px #0431AE; /* Focus interno */
+            z-index: 10;
+        }
+        .data-row:hover .data-label, 
+        .data-row:hover .data-value {
+            background-color: #f8fafc;
+        }
+
+        /* Stili Accordion */
+        details > summary {
+            list-style: none;
+        }
+        details > summary::-webkit-details-marker {
+            display: none;
+        }
+        details[open] summary ~ * {
+            animation: sweep .3s ease-in-out;
+        }
+        @keyframes sweep {
+            0%    {opacity: 0; transform: translateY(-10px)}
+            100%  {opacity: 1; transform: translateY(0)}
+        }
+        .accordion-arrow {
+            transition: transform 0.2s;
+        }
+        details[open] .accordion-arrow {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
 
-    <header class="brand-yellow p-4 shadow-md">
+    <header class="brand-yellow p-4 shadow-md sticky top-0 z-50">
         <h1 class="text-3xl font-bold text-brand-blue text-center">Generatore Grafici</h1>
     </header>
 
-    <main class="container mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <main class="container mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <div class="lg:col-span-4 bg-white p-6 rounded-lg shadow-lg h-fit">
+        <div class="lg:col-span-4 space-y-3 h-fit">
             
-            <div class="mb-6">
-                <h2 class="text-xl font-bold text-brand-blue mb-3">1. Seleziona tipo di grafico</h2>
-                <div class="grid grid-cols-2 gap-4 custom-radio">
+            <div class="bg-white p-4 rounded-lg shadow-md border border-gray-100">
+                <h2 class="text-lg font-bold text-brand-blue mb-3">1. Tipo di grafico</h2>
+                <div class="grid grid-cols-2 gap-3 custom-radio">
                     <div>
                         <input type="radio" id="histogram" name="chart_type" value="histogram" checked class="chart-type-selector">
-                        <label for="histogram" class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 text-center block hover:border-blue-400">Istogramma</label>
+                        <label for="histogram" class="cursor-pointer border border-gray-200 rounded-md p-3 text-center block hover:border-blue-400 text-sm">Istogramma</label>
                     </div>
                     <div>
                         <input type="radio" id="pie_chart" name="chart_type" value="pie" class="chart-type-selector">
-                        <label for="pie_chart" class="cursor-pointer border-2 border-gray-200 rounded-lg p-4 text-center block hover:border-blue-400">Grafico a Torta</label>
+                        <label for="pie_chart" class="cursor-pointer border border-gray-200 rounded-md p-3 text-center block hover:border-blue-400 text-sm">Torta / Anello</label>
                     </div>
                 </div>
             </div>
 
-            <div class="mb-6">
-                <h2 class="text-xl font-bold text-brand-blue mb-3">2. Carica i dati</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label for="chart-title" class="block text-sm font-medium text-gray-700 mb-1">Titolo del Grafico</label>
-                        <input type="text" id="chart-title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Es. Interazioni Mensili">
+            <details class="bg-white rounded-lg shadow-md border border-gray-100 group" open>
+                <summary class="cursor-pointer p-4 bg-gray-50 rounded-t-lg hover:bg-gray-100 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-brand-blue">2. Dati e Contenuto</h2>
+                    <svg class="w-5 h-5 text-gray-500 accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </summary>
+                <div class="p-4 border-t border-gray-200">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="chart-title" class="block text-sm font-medium text-gray-700 mb-1">Titolo del Grafico</label>
+                            <input type="text" id="chart-title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Es. Interazioni Mensili">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="w-1/2 pr-2">
+                                <label for="font-size-title" class="block text-sm font-medium text-gray-700">Font Titolo</label>
+                                <input type="number" id="font-size-title" value="32" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            </div>
+                            <div class="w-1/2 pl-2 flex items-center mt-6">
+                                <input id="hide-title-toggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <label for="hide-title-toggle" class="ml-2 block text-sm text-gray-900">Nascondi</label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Inserimento Dati</label>
+                            <div class="flex rounded-md shadow-sm">
+                                <button id="toggle-manual-btn" type="button" class="input-toggle-btn active w-1/2 relative inline-flex items-center justify-center p-2 rounded-l-md border text-sm font-medium focus:outline-none">Griglia (Manuale)</button>
+                                <button id="toggle-paste-btn" type="button" class="input-toggle-btn inactive -ml-px w-1/2 relative inline-flex items-center justify-center p-2 rounded-r-md border text-sm font-medium focus:outline-none">Incolla Testo</button>
+                            </div>
+                        </div>
+                        
+                        <div id="manual-entry-wrapper" style="display: block;">
+                            <div class="flex gap-0 mb-1 px-0">
+                                <div class="w-2/3 text-xs font-bold text-gray-500 uppercase tracking-wider pl-2">Etichetta</div>
+                                <div class="w-1/3 text-xs font-bold text-gray-500 uppercase tracking-wider pl-2">Valore</div>
+                            </div>
+                            
+                            <div id="manual-data-container" class="max-h-64 overflow-y-auto shadow-sm">
+                                </div>
+                            
+                            <button type="button" id="add-row-btn" class="mt-2 w-full text-sm text-brand-blue font-semibold py-2 px-4 rounded-md border border-dashed border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors">
+                                + Aggiungi Riga
+                            </button>
+                        </div>
+
+                        <div id="paste-data-container" style="display: none;">
+                            <label for="data-paste" class="block text-xs text-gray-500 mb-1">Copia da Excel e incolla qui (Label [TAB] Valore)</label>
+                            <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm font-mono" placeholder="Territorio	907.552&#10;Prodotti	781.643"></textarea>
+                        </div>
+
+                        <div class="relative py-2">
+                            <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                                <div class="w-full border-t border-gray-300"></div>
+                            </div>
+                            <div class="relative flex justify-center">
+                                <span class="bg-white px-2 text-xs text-gray-500">OPPURE</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="file-upload" class="w-full inline-block text-center px-4 py-2 border border-dashed border-gray-400 rounded-md cursor-pointer hover:bg-gray-50 transition-colors">
+                                <span id="file-label" class="text-sm text-gray-600">Carica file Excel (.xlsx)</span>
+                                <input type="file" id="file-upload" class="hidden" accept=".xlsx, .xls">
+                            </label>
+                        </div>
                     </div>
-                    <div>
-                        <label for="font-size-title" class="block text-sm font-medium text-gray-700">Font Titolo (px)</label>
-                        <input type="number" id="font-size-title" value="32" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                    <div class="flex items-center">
-                        <input id="hide-title-toggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                        <label for="hide-title-toggle" class="ml-2 block text-sm text-gray-900">Nascondi titolo</label>
-                    </div>
+                </div>
+            </details>
+
+            <details class="bg-white rounded-lg shadow-md border border-gray-100 group">
+                <summary class="cursor-pointer p-4 bg-gray-50 rounded-t-lg hover:bg-gray-100 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-brand-blue">3. Personalizzazione</h2>
+                    <svg class="w-5 h-5 text-gray-500 accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </summary>
+                <div class="p-4 border-t border-gray-200">
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Modalità Inserimento Dati</label>
-                        <div class="flex rounded-md shadow-sm">
-                            <button id="toggle-paste-btn" type="button" class="input-toggle-btn active w-1/2 relative inline-flex items-center justify-center p-2 rounded-l-md border text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">Incolla Dati</button>
-                            <button id="toggle-manual-btn" type="button" class="input-toggle-btn inactive -ml-px w-1/2 relative inline-flex items-center justify-center p-2 rounded-r-md border text-sm font-medium focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">Manuale</button>
-                        </div>
-                    </div>
-                    
-                    <div id="paste-data-container">
-                        <label for="data-paste" class="block text-sm font-medium text-gray-700 mb-1">Incolla dati (Label [TAB] Valore)</label>
-                        <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Territorio	907.552&#10;Prodotti e servizi	781.643&#10;Filatelia	534.540"></textarea>
-                    </div>
-
-                    <div id="manual-entry-wrapper" style="display: none;">
-                        <div class="flex gap-2 mb-2 px-1">
-                            <div class="w-2/3 text-sm font-semibold text-gray-600">Etichetta</div>
-                            <div class="w-1/3 text-sm font-semibold text-gray-600">Valore</div>
-                        </div>
-                        <div id="manual-data-container" class="space-y-2 max-h-60 overflow-y-auto pr-2">
-                        </div>
-                        <button type="button" id="add-row-btn" class="mt-2 w-full text-sm text-brand-blue font-semibold py-2 px-4 rounded-md border-2 border-dashed border-gray-300 hover:bg-gray-50 transition-colors">
-                            + Aggiungi Riga
-                        </button>
-                    </div>
-
-                    <div class="text-center text-gray-500">oppure</div>
-                    <div>
-                        <label for="file-upload" class="w-full inline-block text-center px-4 py-2 border border-dashed border-gray-400 rounded-md cursor-pointer hover:bg-gray-50">
-                            <span id="file-label">Carica file Excel (.xlsx)</span>
-                            <input type="file" id="file-upload" class="hidden" accept=".xlsx, .xls">
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div id="histogram-options" class="mb-6">
-                <h3 class="text-lg font-bold text-brand-blue mb-3">Opzioni Istogramma</h3>
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="chart-width" class="block text-sm font-medium text-gray-700">Larghezza (px)</label>
-                            <input type="number" id="chart-width" value="800" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="chart-height" class="block text-sm font-medium text-gray-700">Altezza (px)</label>
-                            <input type="number" id="chart-height" value="500" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-                    <div>
-                        <label for="histogram-color-scheme" class="block text-sm font-medium text-gray-700">Schema Colori</label>
-                        <select id="histogram-color-scheme" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="blue" data-main="#bfd7fd" data-highlight="#0431AE">Blu (Default)</option>
-                            <option value="yellow" data-main="#eedf4a" data-highlight="#faee80">Giallo</option>
-                        </select>
-                    </div>
-                    <div id="histogram-yellow-outline-container" class="pl-2" style="display: none;">
-                        <div class="flex items-center">
-                            <input id="histogram-yellow-outline" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="histogram-yellow-outline" class="ml-2 block text-sm text-gray-900">Aggiungi outline blu</label>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="chart-orientation" class="block text-sm font-medium text-gray-700">Orientamento</label>
-                        <select id="chart-orientation" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="vertical" selected>Verticale (default)</option>
-                            <option value="horizontal">Orizzontale</option>
-                        </select>
-                    </div>
-                     <div class="flex items-center pl-1 pt-1">
-                        <input id="hide-value-axis-toggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                        <label for="hide-value-axis-toggle" class="ml-2 block text-sm text-gray-900">Nascondi asse valori (solo orizz.)</label>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                         <div>
-                            <label for="font-size-x" class="block text-sm font-medium text-gray-700">Font Assi (px)</label>
-                            <input type="number" id="font-size-x" value="12" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label for="font-size-y" class="block text-sm font-medium text-gray-700">Font Valori (px)</label>
-                            <input type="number" id="font-size-y" value="12" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 pt-2">
-                        <div>
-                            <label for="histogram-decimals" class="block text-sm font-medium text-gray-700">Decimali Valori</label>
-                            <select id="histogram-decimals" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="0">0</option>
-                                <option value="1">1</option>
-                                <option value="2" selected>2</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="histogram-label-weight" class="block text-sm font-medium text-gray-700">Stile Valori</label>
-                            <select id="histogram-label-weight" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="900" selected>Bold</option>
-                                <option value="400">Light</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="sort-by" class="block text-sm font-medium text-gray-700">Ordina per</label>
-                            <select id="sort-by" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="none" selected>Nessun ordine (default)</option>
-                                <option value="label">Etichetta (Col A)</option>
-                                <option value="value">Valore (Col B)</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="sort-direction" class="block text-sm font-medium text-gray-700">Direzione</label>
-                            <select id="sort-direction" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <option value="asc">Crescente (A-Z, 0-9)</option>
-                                <option value="desc" selected>Decrescente (Z-A, 9-0)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="pie-chart-options" class="mb-6" style="display: none;">
-                <h3 class="text-lg font-bold text-brand-blue mb-3">Opzioni Grafico a Torta</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center">
-                        <input id="pie-donut-toggle" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                        <label for="pie-donut-toggle" class="ml-2 block text-sm text-gray-900">Grafico ad anello</label>
-                    </div>
-                    <div id="pie-donut-size-container" style="display: none;">
-                        <label for="pie-donut-size" class="block text-sm font-medium text-gray-700">Spessore Anello</label>
-                        <select id="pie-donut-size" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="stretto">Stretto</option>
-                            <option value="medio" selected>Medio</option>
-                            <option value="largo">Largo</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="pie-color-scheme" class="block text-sm font-medium text-gray-700">Schema Colori</label>
-                        <select id="pie-color-scheme" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="multi" selected>Multi Colore</option>
-                            <option value="mono">Monocolore</option>
-                            <option value="two">2 Colori</option>
-                            <option value="sentiment">Sentiment</option>
-                        </select>
-                    </div>
-                     <div id="pie-mono-color-container" style="display: none;">
-                        <label for="pie-mono-color" class="block text-sm font-medium text-gray-700">Seleziona Colore</label>
-                        <select id="pie-mono-color" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </select>
-                    </div>
-                    <div id="pie-two-color-container" style="display: none;">
-                         <label for="pie-two-color-scheme" class="block text-sm font-medium text-gray-700">Schema Bicolore</label>
-                         <select id="pie-two-color-scheme" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="blue" data-main="#bfd7fd" data-highlight="#0431AE">Blu (Default)</option>
-                            <option value="yellow" data-main="#eedf4a" data-highlight="#faee80">Giallo</option>
-                        </select>
-                        <div id="pie-invert-colors-container" class="flex items-center mt-2">
-                            <input id="pie-invert-colors" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="pie-invert-colors" class="ml-2 block text-sm text-gray-900">Inverti Colori</label>
-                        </div>
-                    </div>
-                    <div>
-                        <div id="pie-smart-sort-container" class="flex items-center">
-                            <input id="pie-smart-sort" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
-                            <label for="pie-smart-sort" class="ml-2 block text-sm text-gray-900">Alterna valori per etichette</label>
-                        </div>
-                        <div id="pie-shuffle-colors-container" class="flex items-center mt-2">
-                            <input id="pie-shuffle-colors" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="pie-shuffle-colors" class="ml-2 block text-sm text-gray-900">Evita colori simili vicini</label>
-                        </div>
-                    </div>
-                    <div>
-                        <label for="pie-label-format" class="block text-sm font-medium text-gray-700">Formato Etichette</label>
-                        <select id="pie-label-format" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="percentage" selected>Percentuale</option>
-                            <option value="absolute">Valore Assoluto</option>
-                        </select>
-                    </div>
-                    <div id="pie-decimals-container">
-                        <label for="pie-decimals" class="block text-sm font-medium text-gray-700">Numero Decimali</label>
-                        <select id="pie-decimals" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="0">0</option>
-                            <option value="1" selected>1</option>
-                            <option value="2">2</option>
-                        </select>
-                    </div>
-                     
-                    <div>
-                        <label for="pie-label-color" class="block text-sm font-medium text-gray-700">Colore Etichette</label>
-                        <select id="pie-label-color" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <option value="blue" selected>Blu (Default)</option>
-                            <option value="gray">Grigio</option>
-                        </select>
-                    </div>
-
-                     <div class="pt-2">
-                         <div class="grid grid-cols-2 gap-4">
-                             <div>
-                                <label for="pie-font-size-labels" class="block text-sm font-medium text-gray-700">Font Etichette (px)</label>
-                                <input type="number" id="pie-font-size-labels" value="28" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <div id="histogram-options">
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Larghezza</label>
+                                    <input type="number" id="chart-width" value="800" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Altezza</label>
+                                    <input type="number" id="chart-height" value="500" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                </div>
                             </div>
                             <div>
-                                <label for="pie-label-weight" class="block text-sm font-medium text-gray-700">Stile Etichette</label>
-                                <select id="pie-label-weight" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <label class="block text-sm font-medium text-gray-700">Schema Colori</label>
+                                <select id="histogram-color-scheme" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                    <option value="blue" data-main="#bfd7fd" data-highlight="#0431AE">Blu (Default)</option>
+                                    <option value="yellow" data-main="#eedf4a" data-highlight="#faee80">Giallo</option>
+                                </select>
+                            </div>
+                            <div id="histogram-yellow-outline-container" style="display: none;">
+                                <div class="flex items-center">
+                                    <input id="histogram-yellow-outline" type="checkbox" class="h-4 w-4 text-blue-600 rounded">
+                                    <label for="histogram-yellow-outline" class="ml-2 text-sm text-gray-900">Aggiungi outline blu</label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Orientamento</label>
+                                <select id="chart-orientation" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                    <option value="vertical" selected>Verticale</option>
+                                    <option value="horizontal">Orizzontale</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="hide-value-axis-toggle" type="checkbox" class="h-4 w-4 text-blue-600 rounded">
+                                <label for="hide-value-axis-toggle" class="ml-2 text-sm text-gray-900">Nascondi asse valori (solo orizz.)</label>
+                            </div>
+                             <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Font Assi</label>
+                                    <input type="number" id="font-size-x" value="12" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Font Valori</label>
+                                    <input type="number" id="font-size-y" value="12" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                </div>
+                            </div>
+                             <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Decimali</label>
+                                    <select id="histogram-decimals" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="0">0</option>
+                                        <option value="1">1</option>
+                                        <option value="2" selected>2</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Stile Valori</label>
+                                    <select id="histogram-label-weight" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="900" selected>Bold</option>
+                                        <option value="400">Light</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Ordina</label>
+                                    <select id="sort-by" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="none" selected>Nessuno</option>
+                                        <option value="label">Etichetta</option>
+                                        <option value="value">Valore</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Direzione</label>
+                                    <select id="sort-direction" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="asc">Crescente</option>
+                                        <option value="desc" selected>Decrescente</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pie-chart-options" style="display: none;">
+                        
+                        <div class="mb-4">
+                             <button id="shuffle-visual-btn" class="w-full bg-indigo-50 text-indigo-700 font-bold py-2 px-4 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-200 flex items-center justify-center gap-2 text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Cambia ordine visivo (Random)
+                            </button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <input id="pie-donut-toggle" type="checkbox" class="h-4 w-4 text-blue-600 rounded">
+                                <label for="pie-donut-toggle" class="ml-2 text-sm text-gray-900">Grafico ad anello</label>
+                            </div>
+                            <div id="pie-donut-size-container" style="display: none;">
+                                <label class="block text-sm font-medium text-gray-700">Spessore</label>
+                                <select id="pie-donut-size" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                    <option value="stretto">Stretto</option>
+                                    <option value="medio" selected>Medio</option>
+                                    <option value="largo">Largo</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Colori</label>
+                                <select id="pie-color-scheme" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                    <option value="multi" selected>Multi Colore</option>
+                                    <option value="mono">Monocolore</option>
+                                    <option value="two">2 Colori</option>
+                                    <option value="sentiment">Sentiment</option>
+                                </select>
+                            </div>
+                             <div id="pie-mono-color-container" style="display: none;">
+                                <label class="block text-sm font-medium text-gray-700">Seleziona Colore</label>
+                                <select id="pie-mono-color" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                </select>
+                            </div>
+                            <div id="pie-two-color-container" style="display: none;">
+                                 <label class="block text-sm font-medium text-gray-700">Schema Bicolore</label>
+                                 <select id="pie-two-color-scheme" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                    <option value="blue" data-main="#bfd7fd" data-highlight="#0431AE">Blu (Default)</option>
+                                    <option value="yellow" data-main="#eedf4a" data-highlight="#faee80">Giallo</option>
+                                </select>
+                                <div class="flex items-center mt-2">
+                                    <input id="pie-invert-colors" type="checkbox" class="h-4 w-4 text-blue-600 rounded">
+                                    <label for="pie-invert-colors" class="ml-2 text-sm text-gray-900">Inverti Colori</label>
+                                </div>
+                            </div>
+                            <div>
+                                <div id="pie-smart-sort-container" class="flex items-center">
+                                    <input id="pie-smart-sort" type="checkbox" class="h-4 w-4 text-blue-600 rounded" checked>
+                                    <label for="pie-smart-sort" class="ml-2 text-xs text-gray-900">Evita sovrapposizioni (Smart Sort)</label>
+                                </div>
+                                <div id="pie-shuffle-colors-container" class="flex items-center mt-2">
+                                    <input id="pie-shuffle-colors" type="checkbox" class="h-4 w-4 text-blue-600 rounded">
+                                    <label for="pie-shuffle-colors" class="ml-2 text-xs text-gray-900">Evita colori simili vicini</label>
+                                </div>
+                            </div>
+                             <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Formato</label>
+                                    <select id="pie-label-format" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="percentage" selected>%</option>
+                                        <option value="absolute">Valore</option>
+                                    </select>
+                                </div>
+                                 <div id="pie-decimals-container">
+                                    <label class="block text-xs font-medium text-gray-700">Decimali</label>
+                                    <select id="pie-decimals" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="0">0</option>
+                                        <option value="1" selected>1</option>
+                                        <option value="2">2</option>
+                                    </select>
+                                </div>
+                             </div>
+                             
+                             <div class="grid grid-cols-2 gap-3">
+                                 <div>
+                                    <label class="block text-xs font-medium text-gray-700">Colore Etichette</label>
+                                    <select id="pie-label-color" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="blue" selected>Blu</option>
+                                        <option value="gray">Grigio</option>
+                                    </select>
+                                </div>
+                                 <div>
+                                    <label class="block text-xs font-medium text-gray-700">Font Size</label>
+                                    <input type="number" id="pie-font-size-labels" value="28" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                </div>
+                            </div>
+                             <div>
+                                <label class="block text-xs font-medium text-gray-700">Stile Font</label>
+                                <select id="pie-label-weight" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
                                     <option value="900">Grassetto</option>
                                     <option value="400" selected>Normale</option>
                                 </select>
@@ -292,37 +398,47 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </details>
 
-            <div>
-                 <h2 class="text-xl font-bold text-brand-blue mb-3">3. Azioni</h2>
-                 <div class="flex flex-col space-y-3">
-                    <button id="generate-btn" class="w-full brand-blue text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity">
-                        Genera Grafico
-                    </button>
-                    <button id="download-btn" disabled class="w-full bg-gray-400 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed">
-                        Salva SVG
-                    </button>
-                    <hr class="my-2">
-                    <button id="save-settings-btn" class="w-full bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors">
-                        Salva Impostazioni
-                    </button>
-                    <label for="load-settings-input" class="w-full text-center bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors cursor-pointer">
-                        Carica Impostazioni
-                        <input type="file" id="load-settings-input" class="hidden" accept=".json">
-                    </label>
-                 </div>
-            </div>
+            <details class="bg-white rounded-lg shadow-md border border-gray-100 group">
+                <summary class="cursor-pointer p-4 bg-gray-50 rounded-t-lg hover:bg-gray-100 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-brand-blue">4. Azioni</h2>
+                    <svg class="w-5 h-5 text-gray-500 accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </summary>
+                <div class="p-4 border-t border-gray-200">
+                     <div class="flex flex-col space-y-3">
+                        <button id="generate-btn" class="w-full brand-blue text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity shadow-sm">
+                            Genera Grafico
+                        </button>
+                        <button id="download-btn" disabled class="w-full bg-gray-300 text-white font-bold py-2 px-4 rounded-lg cursor-not-allowed transition-colors">
+                            Salva Immagine (SVG)
+                        </button>
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                             <button id="save-settings-btn" class="w-full bg-white text-gray-600 border border-gray-300 font-semibold py-2 px-2 rounded-lg hover:bg-gray-50 text-xs">
+                                Salva Config
+                            </button>
+                            <label for="load-settings-input" class="w-full text-center bg-white text-gray-600 border border-gray-300 font-semibold py-2 px-2 rounded-lg hover:bg-gray-50 text-xs cursor-pointer flex items-center justify-center">
+                                Carica Config
+                                <input type="file" id="load-settings-input" class="hidden" accept=".json">
+                            </label>
+                        </div>
+                     </div>
+                </div>
+            </details>
+
         </div>
 
-        <div class="lg:col-span-8 bg-white p-4 md:p-6 rounded-lg shadow-lg flex flex-col items-center justify-start min-h-[500px]">
+        <div class="lg:col-span-8 bg-white p-4 md:p-6 rounded-lg shadow-lg flex flex-col items-center justify-start min-h-[600px] border border-gray-100">
             <div id="chart-container" class="w-full h-full">
                 <div id="placeholder" class="text-gray-400 flex flex-col items-center justify-center h-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-24 h-24 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    <p class="mt-2">L'anteprima del grafico apparirà qui.</p>
+                    <div class="bg-gray-50 p-6 rounded-full mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    </div>
+                    <p class="text-lg font-medium text-gray-500">L'anteprima del grafico apparirà qui.</p>
+                    <p class="text-sm text-gray-400 mt-2">Compila i dati a sinistra e clicca "Genera Grafico"</p>
                 </div>
             </div>
-             <p id="feedback-message" class="mt-4 text-green-600 font-semibold"></p>
+             <p id="feedback-message" class="mt-4 text-green-600 font-semibold h-6"></p>
         </div>
     </main>
 
@@ -352,15 +468,17 @@
             const pieMonoColorSelect = document.getElementById('pie-mono-color');
             const histogramColorScheme = document.getElementById('histogram-color-scheme');
             const histogramYellowOutlineContainer = document.getElementById('histogram-yellow-outline-container');
+            const shuffleVisualBtn = document.getElementById('shuffle-visual-btn');
 
-            // *** MODIFICA QUI ***
+            // Stato per lo shuffle visuale (indici random)
+            let activeVisualShuffleIndices = null;
+
             const COLORS = {
                 titleBlue: '#0431AE', barBlue: '#bfd7fd', axisGray: '#7b7b7a', gridGray: '#e0e0e0',
-                labelGray: '#7b7b7a', // Grigio etichette
+                labelGray: '#7b7b7a',
                 sentiment: { positive: '#28a745', neutral: '#ffc107', negative: '#dc3545' },
                 multiPie: ['#1a2b92', '#1733ae', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc']
             };
-            // *** FINE MODIFICA ***
 
             const itLocale = d3.formatLocale({ decimal: ",", thousands: ".", grouping: [3], currency: ["€", ""] });
             
@@ -407,39 +525,68 @@
                 histogramYellowOutlineContainer.style.display = e.target.value === 'yellow' ? 'block' : 'none';
             });
 
+            // GESTIONE TAB INSERIMENTO DATI
             togglePasteBtn.addEventListener('click', () => {
                 pasteDataContainer.style.display = 'block';
                 manualEntryWrapper.style.display = 'none';
-                togglePasteBtn.classList.replace('inactive', 'active');
-                toggleManualBtn.classList.replace('active', 'inactive');
+                togglePasteBtn.classList.add('active');
+                togglePasteBtn.classList.remove('inactive');
+                toggleManualBtn.classList.add('inactive');
+                toggleManualBtn.classList.remove('active');
             });
             toggleManualBtn.addEventListener('click', () => {
                 pasteDataContainer.style.display = 'none';
                 manualEntryWrapper.style.display = 'block';
-                toggleManualBtn.classList.replace('inactive', 'active');
-                togglePasteBtn.classList.replace('active', 'inactive');
+                toggleManualBtn.classList.add('active');
+                toggleManualBtn.classList.remove('inactive');
+                togglePasteBtn.classList.add('inactive');
+                togglePasteBtn.classList.remove('active');
             });
 
+            // Resetta lo shuffle se l'utente cambia i dati manualmente
+            const resetShuffle = () => { activeVisualShuffleIndices = null; };
+            dataPaste.addEventListener('input', resetShuffle);
+            
             const createDataRow = (label = '', value = '') => {
                 const rowDiv = document.createElement('div');
-                rowDiv.className = 'flex gap-2 data-row';
+                rowDiv.className = 'data-row'; 
+                
                 const labelInput = document.createElement('input');
                 labelInput.type = 'text';
-                labelInput.className = 'data-label w-2/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
-                labelInput.placeholder = 'Es. Etichetta';
+                labelInput.className = 'data-label w-2/3';
+                labelInput.placeholder = 'Etichetta';
                 labelInput.value = label;
+                labelInput.addEventListener('input', resetShuffle);
+                
                 const valueInput = document.createElement('input');
                 valueInput.type = 'number';
-                valueInput.className = 'data-value w-1/3 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
-                valueInput.placeholder = 'Es. 150';
+                valueInput.className = 'data-value w-1/3';
+                valueInput.placeholder = '0';
                 valueInput.value = value;
+                valueInput.addEventListener('input', resetShuffle);
+                
                 rowDiv.appendChild(labelInput);
                 rowDiv.appendChild(valueInput);
                 manualDataContainer.appendChild(rowDiv);
             };
             
+            // Inizializza 5 righe vuote
             addRowBtn.addEventListener('click', () => createDataRow());
             for (let i = 0; i < 5; i++) { createDataRow(); }
+
+            // LOGICA SHUFFLE VISIVO (Override manuale)
+            shuffleVisualBtn.addEventListener('click', () => {
+                const dataCount = parseData().length;
+                if (dataCount > 0) {
+                    const indices = Array.from({length: dataCount}, (_, i) => i);
+                    for (let i = indices.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [indices[i], indices[j]] = [indices[j], indices[i]];
+                    }
+                    activeVisualShuffleIndices = indices;
+                    generateBtn.click();
+                }
+            });
 
             chartTypeSelectors.forEach(selector => {
                 selector.addEventListener('change', (e) => {
@@ -462,7 +609,7 @@
             fileUpload.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
-                fileLabel.textContent = `Caricato: ${file.name}`;
+                fileLabel.textContent = `File: ${file.name}`;
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const data = new Uint8Array(e.target.result);
@@ -475,7 +622,8 @@
                     jsonData.forEach(row => {
                         if(row[0] || row[1]) { createDataRow(row[0] || '', row[1] || ''); }
                     });
-                    toggleManualBtn.click();
+                    activeVisualShuffleIndices = null; 
+                    toggleManualBtn.click(); // Passa alla vista tabella
                 };
                 reader.readAsArrayBuffer(file);
             });
@@ -491,7 +639,7 @@
                 let data = [];
                 if (isPasteMode) {
                     const text = dataPaste.value.trim();
-                    if (!text) { alert('Per favore, incolla dei dati nell\'area di testo.'); return []; }
+                    if (!text) return []; 
                     data = text.split('\n').map(line => {
                         const parts = line.split('\t');
                         let rawLabel = parts[0] || '';
@@ -516,7 +664,7 @@
                         }
                     });
                 }
-                if (data.length === 0) { alert('Nessun dato valido trovato. Controlla l\'input.'); return []; }
+                if (data.length === 0) return [];
                 return data;
             }
 
@@ -538,7 +686,7 @@
             function formatAxisValueWithOptionalDecimal(num) {
                 let value = num;
                 let suffix = '';
-                let decimals = 0; // Default to 0 decimals
+                let decimals = 0; 
 
                 if (Math.abs(num) >= 1_000_000_000) {
                     value = num / 1_000_000_000;
@@ -551,9 +699,8 @@
                     suffix = '\u00A0K';
                 }
                 
-                // Check if the non-integer part is significant (not very close to 0 or 1)
                 if (Math.abs(value - Math.round(value)) > 1e-6) {
-                   decimals = 1; // Use 1 decimal if there's a fractional part
+                   decimals = 1; 
                 }
                 
                 const formatSpecifier = `,.${decimals}f`;
@@ -563,7 +710,10 @@
 
             generateBtn.addEventListener('click', () => {
                 const data = parseData();
-                if (data.length === 0) return;
+                if (data.length === 0) {
+                    alert('Nessun dato valido trovato. Inserisci almeno un valore.');
+                    return;
+                }
                 
                 showButtonFeedback(generateBtn, 'Generazione...');
                 chartContainer.innerHTML = '';
@@ -608,17 +758,24 @@
                             const labelFormat = document.getElementById('pie-label-format').value;
                             const decimalPlaces = +document.getElementById('pie-decimals').value;
                             const pieFontSizeLabels = +document.getElementById('pie-font-size-labels').value;
-                            drawPieChart(data, title, hideTitle, fontSizeTitle, { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels });
+                            
+                            // Applica Shuffle VISIVO se attivo (vince sullo Smart Sort)
+                            let renderData = [...data];
+                            if (activeVisualShuffleIndices && activeVisualShuffleIndices.length === renderData.length) {
+                                renderData = activeVisualShuffleIndices.map(i => data[i]);
+                            }
+
+                            drawPieChart(renderData, title, hideTitle, fontSizeTitle, { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels });
                         }
                         
                         enableExportButtons();
                         showButtonFeedback(generateBtn, 'Fatto!', true);
                     } catch (error) {
-                         console.error("Errore durante la generazione del grafico:", error);
-                         chartContainer.innerHTML = `<p class="text-red-500 font-semibold p-4">${error.message}</p>`;
+                         console.error("Errore generazione:", error);
+                         chartContainer.innerHTML = `<p class="text-red-500 font-semibold p-4 text-center">Errore: ${error.message}</p>`;
                          showButtonFeedback(generateBtn, 'Errore', false, true);
                     }
-                }, 200);
+                }, 100);
             });
             
             function drawCommonTitle(svg, title, isHidden, fontSize) {
@@ -640,12 +797,11 @@
                 if (orientation === 'horizontal') {
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicLeftMargin = Math.max(100, longestLabel.length * (fontSizeAxis * 0.6));
-                    // Adjust bottom margin if value axis is hidden
                     const bottomMargin = hideValueAxis ? 20 : 40; 
                     const margin = { top: titleHeight, right: 80, bottom: bottomMargin, left: dynamicLeftMargin };
                     const innerWidth = width - margin.left - margin.right;
                     const innerHeight = height - margin.top - margin.bottom;
-                    if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza o riduci i font.");
+                    if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza.");
                     const chartGroup = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
                     const y = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerHeight]).padding(0.4);
                     const x = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([0, innerWidth]);
@@ -662,28 +818,13 @@
                     const yAxis = chartGroup.append("g").call(d3.axisLeft(y).tickSize(0));
                     yAxis.select(".domain").remove();
                     
-                    yAxis.selectAll(".tick text")
-                        .attr("dy", null) // Remove potential previous dy
-                        .attr("y", null) // Remove potential previous y if any
-                        .text(null) // Clear existing text/tspans first
-                        .each(function(d) {
+                    yAxis.selectAll(".tick text").attr("dy", null).attr("y", null).text(null).each(function(d) {
                             const dataPoint = data.find(item => item.rawLabel === d);
                             const labelParts = dataPoint ? dataPoint.labelParts : [d];
-                            // Calculate dy to vertically center based on line height (1.2em) and number of lines
-                            const initialDyOffset = (labelParts.length - 1) / 2; // N lines -> (N-1)/2 offset
-                            const initialDy = `${0.35 - initialDyOffset * 1.2}em`; // 0.35em is approx middle for single line
-
-                            d3.select(this).selectAll("tspan")
-                                .data(labelParts)
-                                .enter()
-                                .append("tspan")
-                                .attr("x", -5)
-                                .attr("dy", (part, i) => i === 0 ? initialDy : "1.2em") 
-                                .text(part => part);
-                        })
-                        .style("font-size", `${fontSizeAxis}px`)
-                        .style("fill", COLORS.axisGray)
-                        .style("text-anchor", "end"); 
+                            const initialDyOffset = (labelParts.length - 1) / 2;
+                            const initialDy = `${0.35 - initialDyOffset * 1.2}em`; 
+                            d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", -5).attr("dy", (part, i) => i === 0 ? initialDy : "1.2em").text(part => part);
+                        }).style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray).style("text-anchor", "end"); 
 
                     if (!hideValueAxis) {
                         const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).ticks(5).tickSize(0).tickFormat(axisTickFormatter));
@@ -692,22 +833,14 @@
                     }
                     
                     chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("y", d => y(d.rawLabel)).attr("x", 0).attr("height", y.bandwidth()).attr("width", d => x(d.value)).attr("fill", d => d.highlight ? highlightColor : mainColor).attr("stroke", addBlueOutline ? COLORS.titleBlue : 'none').attr("stroke-width", addBlueOutline ? 1 : 0);
-                    
-                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label")
-                        .attr("y", d => y(d.rawLabel) + y.bandwidth() / 2)
-                        .attr("x", d => x(d.value) + 5)
-                        .attr("dy", "0.35em") // Use dy for better vertical centering
-                        .style("font-size", `${fontSizeValues}px`)
-                        .style("fill", COLORS.titleBlue)
-                        .style("font-weight", labelWeight)
-                        .text(d => formatItalianNumber(d.value, numDecimals));
-                } else { // Vertical Orientation
+                    chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("y", d => y(d.rawLabel) + y.bandwidth() / 2).attr("x", d => x(d.value) + 5).attr("dy", "0.35em").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", labelWeight).text(d => formatItalianNumber(d.value, numDecimals));
+                } else { 
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeAxis * 0.55);
                     const margin = { top: titleHeight, right: 30, bottom: dynamicBottomMargin, left: 60 };
                     const innerWidth = width - margin.left - margin.right;
                     const innerHeight = height - margin.top - margin.bottom;
-                    if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza o riduci i font.");
+                    if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente.");
                     const chartGroup = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
                     const x = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerWidth]).padding(0.4);
                     const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([innerHeight, 0]);
@@ -744,22 +877,33 @@
                 const finalLabelColor = labelColorChoice === 'gray' ? COLORS.labelGray : COLORS.titleBlue;
 
                 d3.select("#chart-container").html("");
-                const canvasWidth = 1000, canvasHeight = 800, radius = 280; 
+                const canvasWidth = 1000, canvasHeight = 900; // AUMENTATO PER EVITARE TAGLI
+                const radius = 250; // RIDOTTO PER DARE PIÙ SPAZIO ALLE ETICHETTE
                 const svgContainer = d3.select("#chart-container").append("svg").attr("width", "100%").attr("height", "100%").attr("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`).attr('preserveAspectRatio', 'xMidYMin meet'); 
                 drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
-                const topMargin = hideTitle ? 40 : fontSizeTitle * 1.5 + 60;
+                const topMargin = hideTitle ? 50 : fontSizeTitle * 1.5 + 80;
                 const pieGroup = svgContainer.append('g').attr('transform', `translate(${canvasWidth / 2}, ${topMargin + radius})`);
+                
                 let sortedData = [...data];
-                let colorSchemeOrScale;
-                if (smartSort) {
+                // SMART SORT: Algoritmo "Zipper" (Grande, Piccolo, Grande, Piccolo...)
+                if (smartSort && activeVisualShuffleIndices === null) {
                     const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
                     const reordered = [];
-                    for (let left = 0, right = tempSorted.length - 1; left <= right; left++, right--) {
-                        if (left <= right) reordered.push(tempSorted[left]);
-                        if (left < right) reordered.push(tempSorted[right]);
+                    let start = 0;
+                    let end = tempSorted.length - 1;
+                    while(start <= end) {
+                        if (start === end) reordered.push(tempSorted[start]);
+                        else {
+                            reordered.push(tempSorted[start]); 
+                            reordered.push(tempSorted[end]);
+                        }
+                        start++;
+                        end--;
                     }
                     sortedData = reordered;
                 }
+
+                let colorSchemeOrScale;
                 if (colorSchemeType === 'sentiment') {
                     const colorMap = new Map(data.map(d => {
                         const labelLower = d.labelParts.join(' ').toLowerCase();
@@ -784,41 +928,117 @@
                 }
                 const sizeMap = { stretto: 0.75, medio: 0.6, largo: 0.45 };
                 const innerRadius = isDonut ? radius * (sizeMap[donutSize] || 0.6) : 0;
-                const pie = d3.pie().value(d => d.value).sort(null);
+                
+                // Sort null perché abbiamo già ordinato manualmente
+                const pie = d3.pie().value(d => d.value).sort(null); 
                 const data_ready = pie(sortedData);
                 const arc = d3.arc().innerRadius(innerRadius).outerRadius(radius);
                 const outerArc = d3.arc().innerRadius(radius * 1.1).outerRadius(radius * 1.1);
-                pieGroup.selectAll('path').data(data_ready).join('path').attr('d', arc).attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.data.value) : colorSchemeOrScale[i % colorSchemeOrScale.length]).style('stroke', 'white').style('stroke-width', '3px');
-                pieGroup.selectAll('polyline').data(data_ready).join('polyline').attr('stroke', '#444').style('fill', 'none').attr('stroke-width', 1).attr('points', d => {
-                    const midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                    const posC = outerArc.centroid(d);
-                    posC[0] = radius * 1.15 * (midangle < Math.PI ? 1 : -1);
-                    return [arc.centroid(d), outerArc.centroid(d), posC];
+                
+                // Disegna Archi
+                pieGroup.selectAll('path')
+                    .data(data_ready)
+                    .join('path')
+                    .attr('d', arc)
+                    .attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.data.value) : colorSchemeOrScale[i % colorSchemeOrScale.length])
+                    .style('stroke', 'white')
+                    .style('stroke-width', '3px');
+                
+                // --- SISTEMA ETICHETTE CON LINEE CLASSICHE ---
+                const textRadius = radius * 1.35; 
+                const separation = pieFontSizeLabels + 6; // Spazio minimo verticale
+
+                // 1. Calcola posizioni iniziali
+                const labels = data_ready.map(d => {
+                    const midAngle = (d.startAngle + d.endAngle) / 2;
+                    const posOuter = outerArc.centroid(d);
+                    // Calcolo posizione ideale dell'etichetta
+                    const x = textRadius * (midAngle < Math.PI ? 1 : -1);
+                    const y = posOuter[1]; // Partiamo dalla Y naturale
+                    return {
+                        d: d,
+                        midAngle: midAngle,
+                        posOuter: posOuter,
+                        idealY: y,
+                        finalY: y, // Sarà modificata dal relax
+                        x: x,
+                        isRight: (midAngle < Math.PI)
+                    };
                 });
-                pieGroup.selectAll('text').data(data_ready).join('text').attr('transform', d => `translate(${radius * 1.2 * ((d.startAngle + d.endAngle) / 2 < Math.PI ? 1 : -1)}, ${outerArc.centroid(d)[1]})`).style('text-anchor', d => (d.startAngle + d.endAngle) / 2 < Math.PI ? 'start' : 'end').each(function(d) {
-                    const el = d3.select(this);
-                    const total = d3.sum(data.map(item => item.value));
-                    const labelValue = labelFormat === 'percentage'
-                        ? itLocale.format(`.${decimalPlaces}f`)(total === 0 ? 0 : (d.data.value / total * 100)) + '%'
-                        : formatItalianNumber(d.data.value, decimalPlaces);
-                    el.selectAll('*').remove();
-                    
-                    d.data.labelParts.forEach((part, i) => el.append('tspan')
-                        .attr('x', 0)
-                        .attr('dy', i === 0 ? 0 : '1.2em')
-                        .text(part)
-                        .style('font-size', `${pieFontSizeLabels}px`)
-                        .style('font-weight', labelWeight) // Applica peso
-                        .style('fill', finalLabelColor)); // Applica colore
-                    
-                    el.append('tspan')
-                        .attr('x', 0)
-                        .attr('dy', '1.2em')
-                        .text(labelValue)
-                        .style('font-size', `${pieFontSizeLabels - 2}px`)
-                        .style('font-weight', labelWeight) // Applica peso
-                        .style('fill', finalLabelColor); // Applica colore
-                });
+
+                // 2. Risolvi Collisioni (Relax)
+                const relax = (items) => {
+                    items.sort((a,b) => a.idealY - b.idealY);
+                    for (let i = 1; i < items.length; i++) {
+                        const prev = items[i - 1];
+                        const curr = items[i];
+                        if (curr.finalY < prev.finalY + separation) {
+                            curr.finalY = prev.finalY + separation;
+                        }
+                    }
+                };
+                
+                relax(labels.filter(d => d.isRight));
+                relax(labels.filter(d => !d.isRight));
+
+                // 3. Disegna Polilinee CLASSICHE (3 punti)
+                pieGroup.selectAll('polyline')
+                    .data(labels)
+                    .join('polyline')
+                    .attr('points', d => {
+                        const start = arc.centroid(d.d); // Centro fetta
+                        const breakPoint = outerArc.centroid(d.d); // Punto di rottura sul bordo
+                        const end = [d.isRight ? textRadius : -textRadius, d.finalY]; // Fine sull'etichetta (spostata da relax)
+                        
+                        // Creiamo una linea più morbida che segue lo spostamento Y
+                        // Se l'etichetta è stata spostata molto, il breakPoint deve adattarsi leggermente
+                        // Ma per lo stile classico "dritto" teniamo i 3 punti fissi
+                        return [start, breakPoint, end];
+                    })
+                    .style('fill', 'none')
+                    .attr('stroke', '#444')
+                    .attr('stroke-width', 1);
+
+                // 4. Disegna Testo
+                pieGroup.selectAll('text')
+                    .data(labels)
+                    .join('text')
+                    .attr('transform', d => `translate(${d.isRight ? textRadius + 5 : -textRadius - 5}, ${d.finalY})`)
+                    .style('text-anchor', d => d.isRight ? 'start' : 'end')
+                    .each(function(d) {
+                        const el = d3.select(this);
+                        const dataItem = d.d.data;
+                        const total = d3.sum(data.map(item => item.value));
+                        const labelValue = labelFormat === 'percentage'
+                            ? itLocale.format(`.${decimalPlaces}f`)(total === 0 ? 0 : (dataItem.value / total * 100)) + '%'
+                            : formatItalianNumber(dataItem.value, decimalPlaces);
+                        
+                        el.selectAll('*').remove();
+                        
+                        // Centratura verticale
+                        const linesCount = dataItem.labelParts.length + 1;
+                        const lineHeight = 1.1; 
+                        const totalHeightEm = linesCount * lineHeight;
+                        const startDy = -(totalHeightEm / 2) + 0.8; 
+
+                        dataItem.labelParts.forEach((part, i) => {
+                            el.append('tspan')
+                                .attr('x', 0)
+                                .attr('dy', i === 0 ? `${startDy}em` : `${lineHeight}em`)
+                                .text(part)
+                                .style('font-size', `${pieFontSizeLabels}px`)
+                                .style('font-weight', labelWeight)
+                                .style('fill', finalLabelColor);
+                        });
+                        
+                        el.append('tspan')
+                            .attr('x', 0)
+                            .attr('dy', `${lineHeight}em`)
+                            .text(labelValue)
+                            .style('font-size', `${pieFontSizeLabels - 2}px`)
+                            .style('font-weight', labelWeight)
+                            .style('fill', finalLabelColor);
+                    });
             }
 
             function getSettings() {
@@ -865,7 +1085,7 @@
                 const link = document.createElement('a');
                 link.href = url;
                 const date = new Date().toISOString().slice(0, 10);
-                link.download = `impostazioni-grafico-${date}.json`;
+                link.download = `config-grafico-${date}.json`;
                 link.click();
                 URL.revokeObjectURL(url);
                 showButtonFeedback(saveSettingsBtn, 'Salvato!', true);
@@ -879,10 +1099,9 @@
                     try {
                         const settings = JSON.parse(e.target.result);
                         applySettings(settings);
-                        showButtonFeedback(document.querySelector('label[for="load-settings-input"]'), 'Caricato!', true);
+                        showButtonFeedback(document.querySelector('label[for="load-settings-input"]'), 'OK!', true);
                     } catch (err) {
-                        console.error("Errore nel caricare le impostazioni:", err);
-                        showButtonFeedback(document.querySelector('label[for="load-settings-input"]'), 'File non valido', false, true);
+                        showButtonFeedback(document.querySelector('label[for="load-settings-input"]'), 'Err', false, true);
                     }
                 };
                 reader.readAsText(file);
@@ -911,15 +1130,15 @@
             });
             function enableExportButtons() {
                 downloadBtn.disabled = false;
-                downloadBtn.classList.replace('bg-gray-400', 'brand-blue');
+                downloadBtn.classList.replace('bg-gray-300', 'brand-blue');
                 downloadBtn.classList.remove('cursor-not-allowed');
             }
             function showButtonFeedback(button, message, success = false, isError = false) {
                  const originalText = button.textContent;
                  const originalClasses = button.className;
                  button.textContent = message;
-                 if (isError) button.className = 'w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg transition-all';
-                 else if (success) button.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition-all';
+                 if (isError) button.className = 'w-full bg-red-500 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-md';
+                 else if (success) button.className = 'w-full bg-green-500 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-md';
                  setTimeout(() => { button.textContent = originalText; button.className = originalClasses; }, 2000);
             }
         });
