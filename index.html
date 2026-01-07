@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generatore Grafici</title>
+    <title>Generatore Grafici + Sentiment v3</title>
     <link rel="icon" href="favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -48,7 +48,7 @@
 
         /* --- STILI TABELLA TIPO EXCEL (GRID) --- */
         #manual-data-container {
-            border: 1px solid #9ca3af; /* Bordo esterno scuro */
+            border: 1px solid #9ca3af;
             background-color: #fff;
             border-radius: 4px;
             overflow: hidden;
@@ -57,13 +57,12 @@
         .data-row {
             display: flex;
             width: 100%;
-            border-bottom: 1px solid #cbd5e1; /* Linea orizzontale marcata */
+            border-bottom: 1px solid #cbd5e1;
         }
         .data-row:last-child {
             border-bottom: none;
         }
         
-        /* Stile per gli input dentro le celle */
         .data-row input {
             border: none;
             border-radius: 0;
@@ -74,7 +73,6 @@
             transition: background 0.2s;
         }
 
-        /* Linea verticale separatrice tra Etichetta e Valore */
         .data-row .data-label {
             border-right: 1px solid #cbd5e1; 
             background-color: #fff;
@@ -83,10 +81,9 @@
             background-color: #fff;
         }
 
-        /* Effetto focus ed hover */
         .data-row input:focus {
-            background-color: #eff6ff; /* Azzurrino chiaro */
-            box-shadow: inset 0 0 0 2px #0431AE; /* Focus interno */
+            background-color: #eff6ff;
+            box-shadow: inset 0 0 0 2px #0431AE;
             z-index: 10;
         }
         .data-row:hover .data-label, 
@@ -95,25 +92,15 @@
         }
 
         /* Stili Accordion */
-        details > summary {
-            list-style: none;
-        }
-        details > summary::-webkit-details-marker {
-            display: none;
-        }
-        details[open] summary ~ * {
-            animation: sweep .3s ease-in-out;
-        }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+        details[open] summary ~ * { animation: sweep .3s ease-in-out; }
         @keyframes sweep {
             0%    {opacity: 0; transform: translateY(-10px)}
             100%  {opacity: 1; transform: translateY(0)}
         }
-        .accordion-arrow {
-            transition: transform 0.2s;
-        }
-        details[open] .accordion-arrow {
-            transform: rotate(180deg);
-        }
+        .accordion-arrow { transition: transform 0.2s; }
+        details[open] .accordion-arrow { transform: rotate(180deg); }
     </style>
 </head>
 <body class="antialiased text-gray-800">
@@ -128,14 +115,18 @@
             
             <div class="bg-white p-4 rounded-lg shadow-md border border-gray-100">
                 <h2 class="text-lg font-bold text-brand-blue mb-3">1. Tipo di grafico</h2>
-                <div class="grid grid-cols-2 gap-3 custom-radio">
+                <div class="grid grid-cols-3 gap-2 custom-radio">
                     <div>
                         <input type="radio" id="histogram" name="chart_type" value="histogram" checked class="chart-type-selector">
-                        <label for="histogram" class="cursor-pointer border border-gray-200 rounded-md p-3 text-center block hover:border-blue-400 text-sm">Istogramma</label>
+                        <label for="histogram" class="cursor-pointer border border-gray-200 rounded-md p-2 text-center block hover:border-blue-400 text-xs flex items-center justify-center h-full">Istogramma</label>
                     </div>
                     <div>
                         <input type="radio" id="pie_chart" name="chart_type" value="pie" class="chart-type-selector">
-                        <label for="pie_chart" class="cursor-pointer border border-gray-200 rounded-md p-3 text-center block hover:border-blue-400 text-sm">Torta / Anello</label>
+                        <label for="pie_chart" class="cursor-pointer border border-gray-200 rounded-md p-2 text-center block hover:border-blue-400 text-xs flex items-center justify-center h-full">Torta / Anello</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="sentiment_bar" name="chart_type" value="sentiment_bar" class="chart-type-selector">
+                        <label for="sentiment_bar" class="cursor-pointer border border-gray-200 rounded-md p-2 text-center block hover:border-blue-400 text-xs flex items-center justify-center h-full">Barra Sentiment</label>
                     </div>
                 </div>
             </div>
@@ -149,7 +140,7 @@
                     <div class="space-y-4">
                         <div>
                             <label for="chart-title" class="block text-sm font-medium text-gray-700 mb-1">Titolo del Grafico</label>
-                            <input type="text" id="chart-title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Es. Interazioni Mensili">
+                            <input type="text" id="chart-title" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" placeholder="Es. Sentiment Analisi">
                         </div>
                         <div class="flex items-center justify-between">
                             <div class="w-1/2 pr-2">
@@ -177,7 +168,7 @@
                             </div>
                             
                             <div id="manual-data-container" class="max-h-64 overflow-y-auto shadow-sm">
-                                </div>
+                            </div>
                             
                             <button type="button" id="add-row-btn" class="mt-2 w-full text-sm text-brand-blue font-semibold py-2 px-4 rounded-md border border-dashed border-blue-200 bg-blue-50 hover:bg-blue-100 transition-colors">
                                 + Aggiungi Riga
@@ -186,7 +177,7 @@
 
                         <div id="paste-data-container" style="display: none;">
                             <label for="data-paste" class="block text-xs text-gray-500 mb-1">Copia da Excel e incolla qui (Label [TAB] Valore)</label>
-                            <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm font-mono" placeholder="Territorio	907.552&#10;Prodotti	781.643"></textarea>
+                            <textarea id="data-paste" rows="6" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm font-mono" placeholder="Positivo	50&#10;Neutro	30&#10;Negativo	20"></textarea>
                         </div>
 
                         <div class="relative py-2">
@@ -299,7 +290,6 @@
                     </div>
 
                     <div id="pie-chart-options" style="display: none;">
-                        
                         <div class="mb-4">
                              <button id="shuffle-visual-btn" class="w-full bg-indigo-50 text-indigo-700 font-bold py-2 px-4 rounded-lg hover:bg-indigo-100 transition-colors border border-indigo-200 flex items-center justify-center gap-2 text-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -308,7 +298,6 @@
                                 Cambia ordine visivo (Random)
                             </button>
                         </div>
-
                         <div class="space-y-4">
                             <div class="flex items-center">
                                 <input id="pie-donut-toggle" type="checkbox" class="h-4 w-4 text-blue-600 rounded">
@@ -397,6 +386,35 @@
                             </div>
                         </div>
                     </div>
+
+                    <div id="sentiment-bar-options" style="display: none;">
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Larghezza Totale</label>
+                                    <input type="number" id="sentiment-width" value="800" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Altezza Barra</label>
+                                    <input type="number" id="sentiment-height" value="60" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                </div>
+                            </div>
+                             <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Decimali %</label>
+                                    <select id="sentiment-decimals" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="0">0</option>
+                                        <option value="1" selected>1</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700">Font Etichette</label>
+                                    <input type="number" id="sentiment-label-font-size" value="20" class="w-full mt-1 px-2 py-1 border border-gray-300 rounded text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </details>
 
@@ -429,7 +447,7 @@
         </div>
 
         <div class="lg:col-span-8 bg-white p-4 md:p-6 rounded-lg shadow-lg flex flex-col items-center justify-start min-h-[600px] border border-gray-100">
-            <div id="chart-container" class="w-full h-full">
+            <div id="chart-container" class="w-full h-full flex items-center justify-center">
                 <div id="placeholder" class="text-gray-400 flex flex-col items-center justify-center h-full">
                     <div class="bg-gray-50 p-6 rounded-full mb-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
@@ -448,6 +466,7 @@
             const chartTypeSelectors = document.querySelectorAll('.chart-type-selector');
             const histogramOptions = document.getElementById('histogram-options');
             const pieChartOptions = document.getElementById('pie-chart-options');
+            const sentimentBarOptions = document.getElementById('sentiment-bar-options'); // NEW
             const generateBtn = document.getElementById('generate-btn');
             const downloadBtn = document.getElementById('download-btn');
             const chartContainer = document.getElementById('chart-container');
@@ -470,13 +489,12 @@
             const histogramYellowOutlineContainer = document.getElementById('histogram-yellow-outline-container');
             const shuffleVisualBtn = document.getElementById('shuffle-visual-btn');
 
-            // Stato per lo shuffle visuale (indici random)
             let activeVisualShuffleIndices = null;
 
             const COLORS = {
                 titleBlue: '#0431AE', barBlue: '#bfd7fd', axisGray: '#7b7b7a', gridGray: '#e0e0e0',
                 labelGray: '#7b7b7a',
-                sentiment: { positive: '#28a745', neutral: '#ffc107', negative: '#dc3545' },
+                sentiment: { positive: '#28a745', neutral: '#ffc107', negative: '#dc3545', default: '#a9c2ef' },
                 multiPie: ['#1a2b92', '#1733ae', '#2e69b6', '#4180d0', '#5c95dd', '#7da9e6', '#97bdee', '#a9c2ef', '#c4d6f3', '#d2e0f7', '#e1eafb', '#f0f4fc']
             };
 
@@ -525,7 +543,6 @@
                 histogramYellowOutlineContainer.style.display = e.target.value === 'yellow' ? 'block' : 'none';
             });
 
-            // GESTIONE TAB INSERIMENTO DATI
             togglePasteBtn.addEventListener('click', () => {
                 pasteDataContainer.style.display = 'block';
                 manualEntryWrapper.style.display = 'none';
@@ -543,7 +560,6 @@
                 togglePasteBtn.classList.remove('active');
             });
 
-            // Resetta lo shuffle se l'utente cambia i dati manualmente
             const resetShuffle = () => { activeVisualShuffleIndices = null; };
             dataPaste.addEventListener('input', resetShuffle);
             
@@ -570,11 +586,9 @@
                 manualDataContainer.appendChild(rowDiv);
             };
             
-            // Inizializza 5 righe vuote
             addRowBtn.addEventListener('click', () => createDataRow());
             for (let i = 0; i < 5; i++) { createDataRow(); }
 
-            // LOGICA SHUFFLE VISIVO (Override manuale)
             shuffleVisualBtn.addEventListener('click', () => {
                 const dataCount = parseData().length;
                 if (dataCount > 0) {
@@ -588,11 +602,13 @@
                 }
             });
 
+            // GESTIONE VISIBILITÀ OPZIONI IN BASE AL TIPO DI GRAFICO
             chartTypeSelectors.forEach(selector => {
                 selector.addEventListener('change', (e) => {
-                    const isHistogram = e.target.value === 'histogram';
-                    histogramOptions.style.display = isHistogram ? 'block' : 'none';
-                    pieChartOptions.style.display = !isHistogram ? 'block' : 'none';
+                    const val = e.target.value;
+                    histogramOptions.style.display = val === 'histogram' ? 'block' : 'none';
+                    pieChartOptions.style.display = val === 'pie' ? 'block' : 'none';
+                    sentimentBarOptions.style.display = val === 'sentiment_bar' ? 'block' : 'none';
                 });
             });
             
@@ -623,7 +639,7 @@
                         if(row[0] || row[1]) { createDataRow(row[0] || '', row[1] || ''); }
                     });
                     activeVisualShuffleIndices = null; 
-                    toggleManualBtn.click(); // Passa alla vista tabella
+                    toggleManualBtn.click(); 
                 };
                 reader.readAsArrayBuffer(file);
             });
@@ -687,7 +703,6 @@
                 let value = num;
                 let suffix = '';
                 let decimals = 0; 
-
                 if (Math.abs(num) >= 1_000_000_000) {
                     value = num / 1_000_000_000;
                     suffix = '\u00A0Mld';
@@ -698,14 +713,11 @@
                     value = num / 1_000;
                     suffix = '\u00A0K';
                 }
-                
                 if (Math.abs(value - Math.round(value)) > 1e-6) {
                    decimals = 1; 
                 }
-                
                 const formatSpecifier = `,.${decimals}f`;
                 return itLocale.format(formatSpecifier)(value) + suffix;
-
             }
 
             generateBtn.addEventListener('click', () => {
@@ -741,14 +753,14 @@
                             const fontSizeY = +document.getElementById('font-size-y').value;
                             const orientation = document.getElementById('chart-orientation').value;
                             const hideValueAxis = document.getElementById('hide-value-axis-toggle').checked;
-
                             const colorSelect = document.getElementById('histogram-color-scheme');
                             const selectedOption = colorSelect.options[colorSelect.selectedIndex];
                             const mainColor = selectedOption.dataset.main;
                             const highlightColor = selectedOption.dataset.highlight;
 
                             drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor, hideValueAxis);
-                        } else {
+
+                        } else if (chartType === 'pie') {
                             const isDonut = document.getElementById('pie-donut-toggle').checked;
                             const donutSize = document.getElementById('pie-donut-size').value;
                             const colorSchemeType = pieColorScheme.value;
@@ -759,13 +771,19 @@
                             const decimalPlaces = +document.getElementById('pie-decimals').value;
                             const pieFontSizeLabels = +document.getElementById('pie-font-size-labels').value;
                             
-                            // Applica Shuffle VISIVO se attivo (vince sullo Smart Sort)
                             let renderData = [...data];
                             if (activeVisualShuffleIndices && activeVisualShuffleIndices.length === renderData.length) {
                                 renderData = activeVisualShuffleIndices.map(i => data[i]);
                             }
-
                             drawPieChart(renderData, title, hideTitle, fontSizeTitle, { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels });
+
+                        } else if (chartType === 'sentiment_bar') {
+                            const width = +document.getElementById('sentiment-width').value;
+                            const barHeight = +document.getElementById('sentiment-height').value;
+                            const decimals = +document.getElementById('sentiment-decimals').value;
+                            const labelFontSize = +document.getElementById('sentiment-label-font-size').value;
+
+                            drawSentimentBar(data, title, hideTitle, fontSizeTitle, width, barHeight, decimals, labelFontSize);
                         }
                         
                         enableExportButtons();
@@ -779,10 +797,124 @@
             });
             
             function drawCommonTitle(svg, title, isHidden, fontSize) {
-                if (isHidden) return;
+                if (isHidden) return 0;
                 const titleGroup = svg.append('g').attr('transform', `translate(30, 20)`);
                 titleGroup.append('text').attr('x', 0).attr('y', 0).attr('dy', '0.8em').attr('font-family', 'Nunito Sans, sans-serif').attr('font-size', `${fontSize}px`).attr('font-weight', '700').attr('fill', COLORS.titleBlue).text(title);
                 titleGroup.append('line').attr('x1', 0).attr('x2', 400).attr('y1', fontSize * 1.1).attr('y2', fontSize * 1.1).attr('stroke', COLORS.titleBlue).attr('stroke-width', 2);
+                return fontSize * 1.5 + 40; // Ritorna l'altezza occupata
+            }
+
+            // --- NUOVA FUNZIONE: BARRA SENTIMENT (Modificata v3) ---
+            function drawSentimentBar(data, title, hideTitle, fontSizeTitle, width, barHeight, decimals, labelFontSize) {
+                // Stima altezza
+                let currentY = hideTitle ? 20 : 100;
+                const legendPadding = 40;
+                const totalHeight = currentY + barHeight + legendPadding + 50; 
+
+                d3.select("#chart-container").html("");
+                const svg = d3.select("#chart-container").append("svg")
+                    .attr("width", width)
+                    .attr("height", totalHeight)
+                    .attr("viewBox", `0 0 ${width} ${totalHeight}`)
+                    .style("background-color", "transparent");
+
+                const titleOccupiedHeight = drawCommonTitle(svg, title, hideTitle, fontSizeTitle);
+                currentY = hideTitle ? 30 : titleOccupiedHeight + 10;
+
+                const getSentimentColor = (label) => {
+                    const l = label.toLowerCase().trim();
+                    if (l.includes('positivo') || l.includes('positive')) return COLORS.sentiment.positive;
+                    if (l.includes('neutro') || l.includes('neutral') || l.includes('misto')) return COLORS.sentiment.neutral;
+                    if (l.includes('negativo') || l.includes('negative')) return COLORS.sentiment.negative;
+                    return COLORS.sentiment.default;
+                };
+
+                const totalVal = d3.sum(data, d => d.value);
+                let cumulative = 0;
+                const processedData = data.map(d => {
+                    const pct = (d.value / totalVal);
+                    const item = {
+                        ...d,
+                        color: getSentimentColor(d.rawLabel),
+                        pct: pct,
+                        start: cumulative,
+                        width: pct 
+                    };
+                    cumulative += pct;
+                    return item;
+                });
+
+                const marginX = 30;
+                const chartWidth = width - (marginX * 2);
+                
+                // 1. Disegno Barra
+                const barGroup = svg.append('g').attr('transform', `translate(${marginX}, ${currentY})`);
+                const xScale = d3.scaleLinear().domain([0, 1]).range([0, chartWidth]);
+
+                processedData.forEach((d, i) => {
+                    const rectWidth = xScale(d.width);
+                    const xPos = xScale(d.start);
+                    
+                    const isFirst = i === 0;
+                    const isLast = i === processedData.length - 1;
+                    const radius = barHeight / 2; 
+                    
+                    const path = d3.path();
+                    const r = 8; 
+                    const w = rectWidth;
+                    const h = barHeight;
+                    
+                    path.moveTo(isFirst ? r : 0, 0);
+                    path.lineTo(isLast ? w - r : w, 0);
+                    if (isLast) path.arc(w - r, r, r, -Math.PI/2, 0);
+                    else path.lineTo(w, 0);
+                    
+                    path.lineTo(w, isLast ? h - r : h);
+                    if (isLast) path.arc(w - r, h - r, r, 0, Math.PI/2);
+                    else path.lineTo(w, h);
+                    
+                    path.lineTo(isFirst ? r : 0, h);
+                    if (isFirst) path.arc(r, h - r, r, Math.PI/2, Math.PI);
+                    else path.lineTo(0, h);
+                    
+                    path.lineTo(0, isFirst ? r : 0);
+                    if (isFirst) path.arc(r, r, r, Math.PI, -Math.PI/2);
+                    
+                    path.closePath();
+
+                    barGroup.append('path')
+                        .attr('d', path.toString())
+                        .attr('transform', `translate(${xPos}, 0)`)
+                        .attr('fill', d.color)
+                        .attr('stroke', 'white')
+                        .attr('stroke-width', 1);
+                });
+
+                // 2. Disegno Etichette SOTTO la barra
+                const legendY = currentY + barHeight + 20; // Spazio sotto la barra
+                const legendGroup = svg.append('g').attr('transform', `translate(${marginX}, ${legendY})`);
+                let legendX = 0;
+                
+                processedData.forEach(d => {
+                    // Pallino
+                    legendGroup.append('circle')
+                        .attr('cx', legendX + 5)
+                        .attr('cy', 5) // Centrato rispetto al testo circa
+                        .attr('r', 6)
+                        .attr('fill', d.color);
+                    
+                    // Testo
+                    const textEl = legendGroup.append('text')
+                        .attr('x', legendX + 18)
+                        .attr('y', 10)
+                        .text(`${d.rawLabel} (${itLocale.format(`.${decimals}f`)(d.pct * 100)}%)`) 
+                        .attr('font-size', `${labelFontSize}px`)
+                        .attr('fill', '#444')
+                        .attr('font-weight', '600');
+                    
+                    const bbox = textEl.node().getBBox();
+                    legendX += bbox.width + 35; // Spazio tra elementi
+                });
             }
 
             function drawHistogram(data, title, width, height, fontSizeAxis, fontSizeValues, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor, hideValueAxis) {
@@ -791,14 +923,13 @@
                 const labelWeight = document.getElementById('histogram-label-weight').value;
                 
                 const svg = d3.select("#chart-container").append("svg").attr("width", width).attr("height", height).attr("viewBox", `0 0 ${width} ${height}`).style("background-color", "transparent");
-                drawCommonTitle(svg, title, hideTitle, fontSizeTitle);
-                const titleHeight = hideTitle ? 20 : fontSizeTitle * 1.5 + 40;
+                const titleHeight = drawCommonTitle(svg, title, hideTitle, fontSizeTitle);
                 
                 if (orientation === 'horizontal') {
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicLeftMargin = Math.max(100, longestLabel.length * (fontSizeAxis * 0.6));
                     const bottomMargin = hideValueAxis ? 20 : 40; 
-                    const margin = { top: titleHeight, right: 80, bottom: bottomMargin, left: dynamicLeftMargin };
+                    const margin = { top: titleHeight || 20, right: 80, bottom: bottomMargin, left: dynamicLeftMargin };
                     const innerWidth = width - margin.left - margin.right;
                     const innerHeight = height - margin.top - margin.bottom;
                     if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza.");
@@ -837,7 +968,7 @@
                 } else { 
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeAxis * 0.55);
-                    const margin = { top: titleHeight, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                    const margin = { top: titleHeight || 20, right: 30, bottom: dynamicBottomMargin, left: 60 };
                     const innerWidth = width - margin.left - margin.right;
                     const innerHeight = height - margin.top - margin.bottom;
                     if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente.");
@@ -877,16 +1008,14 @@
                 const finalLabelColor = labelColorChoice === 'gray' ? COLORS.labelGray : COLORS.titleBlue;
 
                 d3.select("#chart-container").html("");
-                const canvasWidth = 800, canvasHeight = 1100; // Increased height
-                const radius = 210; // Keep radius moderate
+                const canvasWidth = 800, canvasHeight = 1100; 
+                const radius = 210;
                 const svgContainer = d3.select("#chart-container").append("svg").attr("width", "100%").attr("height", "100%").attr("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`).attr('preserveAspectRatio', 'xMidYMin meet'); 
                 drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
                 
-                // Center vertically in the new height
                 const pieGroup = svgContainer.append('g').attr('transform', `translate(${canvasWidth / 2}, ${canvasHeight / 2 + 20})`);
                 
                 let sortedData = [...data];
-                // SMART SORT: Algoritmo "Zipper"
                 if (smartSort && activeVisualShuffleIndices === null) {
                     const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
                     const reordered = [];
@@ -908,10 +1037,10 @@
                 if (colorSchemeType === 'sentiment') {
                     const colorMap = new Map(data.map(d => {
                         const labelLower = d.labelParts.join(' ').toLowerCase();
-                        if (labelLower === 'positivo') return [d.rawLabel, COLORS.sentiment.positive];
-                        if (labelLower === 'neutro') return [d.rawLabel, COLORS.sentiment.neutral];
-                        if (labelLower === 'negativo') return [d.rawLabel, COLORS.sentiment.negative];
-                        return [d.rawLabel, 'gray'];
+                        if (labelLower.includes('positivo') || labelLower.includes('positive')) return [d.rawLabel, COLORS.sentiment.positive];
+                        if (labelLower.includes('neutro') || labelLower.includes('neutral')) return [d.rawLabel, COLORS.sentiment.neutral];
+                        if (labelLower.includes('negativo') || labelLower.includes('negative')) return [d.rawLabel, COLORS.sentiment.negative];
+                        return [d.rawLabel, COLORS.sentiment.default];
                     }));
                     colorSchemeOrScale = sortedData.map(d => colorMap.get(d.rawLabel));
                 } else if (colorSchemeType === 'two') {
@@ -937,12 +1066,10 @@
                 
                 pieGroup.selectAll('path').data(data_ready).join('path').attr('d', arc).attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.data.value) : colorSchemeOrScale[i % colorSchemeOrScale.length]).style('stroke', 'white').style('stroke-width', '3px');
                 
-                // --- NUOVO SISTEMA ETICHETTE FISICO + STAGGERING ---
                 const baseTextRadius = radius * 1.15;
-                const farTextRadius = radius * 1.45; // Secondo livello per etichette dense
+                const farTextRadius = radius * 1.45;
                 const minDistance = pieFontSizeLabels + 6; 
 
-                // 1. Inizializzazione Etichette
                 const labels = data_ready.map(d => {
                     const midAngle = (d.startAngle + d.endAngle) / 2;
                     const posOuter = outerArc.centroid(d);
@@ -950,15 +1077,14 @@
                     return {
                         d: d,
                         midAngle: midAngle,
-                        y: posOuter[1], // Y iniziale
+                        y: posOuter[1],
                         xSign: isRight ? 1 : -1,
                         isRight: isRight,
-                        radius: baseTextRadius, // Default raggio corto
+                        radius: baseTextRadius, 
                         staggered: false
                     };
                 });
 
-                // 2. Rilassamento + Staggering Automatico
                 const relaxLabels = (items) => {
                     items.sort((a, b) => a.y - b.y);
                     let iterations = 0;
@@ -968,33 +1094,23 @@
                         changed = false;
                         iterations++;
                         
-                        // Check Overlaps
                         for (let i = 0; i < items.length - 1; i++) {
                             const a = items[i];
                             const b = items[i + 1];
                             const dist = b.y - a.y;
                             
                             if (dist < minDistance) {
-                                // Se troppo vicini, spingiamoli verticalmente
                                 const overlap = minDistance - dist;
                                 const move = overlap / 2;
                                 a.y -= move;
                                 b.y += move;
                                 changed = true;
-
-                                // STAGGERING: Se sono ancora molto vicini o l'overlap era grande,
-                                // sposta uno dei due su un raggio più esterno (Stagger)
-                                // Questo permette visivamente di distinguerli meglio anche se le Y sono vicine
                                 if (!a.staggered && !b.staggered && dist < minDistance * 0.8) {
-                                    // Alterna: sposta quello "sotto" (o sopra) all'esterno
                                     b.radius = farTextRadius; 
                                     b.staggered = true;
                                 }
                             }
                         }
-
-                        // Boundary Check (Anti-Taglio)
-                        // Limiti relativi al centro del gruppo (che è a canvasHeight/2)
                         const topLimit = - (canvasHeight / 2) + 40; 
                         const bottomLimit = (canvasHeight / 2) - 40;
 
@@ -1016,14 +1132,12 @@
                 relaxLabels(labels.filter(d => d.isRight));
                 relaxLabels(labels.filter(d => !d.isRight));
 
-                // 3. Disegno Linee (Adattive)
                 pieGroup.selectAll('polyline')
                     .data(labels)
                     .join('polyline')
                     .attr('points', d => {
                         const start = arc.centroid(d.d);
                         const breakPoint = outerArc.centroid(d.d);
-                        // Il punto finale usa il raggio dinamico (corto o lungo)
                         const endX = d.radius * d.xSign;
                         return [start, breakPoint, [endX, d.y]];
                     })
@@ -1031,7 +1145,6 @@
                     .attr('stroke', '#444')
                     .attr('stroke-width', 1);
 
-                // 4. Disegno Testo
                 pieGroup.selectAll('text')
                     .data(labels)
                     .join('text')
