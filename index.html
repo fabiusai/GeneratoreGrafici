@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generatore Grafici + Sentiment v3</title>
+    <title>Generatore Grafici + Sentiment v5.1</title>
     <link rel="icon" href="favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -231,12 +231,23 @@
                                     <label for="histogram-yellow-outline" class="ml-2 text-sm text-gray-900">Aggiungi outline blu</label>
                                 </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Orientamento</label>
-                                <select id="chart-orientation" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
-                                    <option value="vertical" selected>Verticale</option>
-                                    <option value="horizontal">Orizzontale</option>
-                                </select>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Orientamento</label>
+                                    <select id="chart-orientation" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                        <option value="vertical" selected>Verticale</option>
+                                        <option value="horizontal">Orizzontale</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Spaziatura Barre</label>
+                                    <select id="histogram-padding" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                                        <option value="0.1">Molto Stretta</option>
+                                        <option value="0.2">Stretta</option>
+                                        <option value="0.4" selected>Normale</option>
+                                        <option value="0.6">Larga</option>
+                                    </select>
+                                </div>
                             </div>
                             <div class="flex items-center">
                                 <input id="hide-value-axis-toggle" type="checkbox" class="h-4 w-4 text-blue-600 rounded">
@@ -317,7 +328,7 @@
                                     <option value="multi" selected>Multi Colore</option>
                                     <option value="mono">Monocolore</option>
                                     <option value="two">2 Colori</option>
-                                    <option value="sentiment">Sentiment</option>
+                                    <option value="sentiment">Sentiment (con Legenda in basso)</option>
                                 </select>
                             </div>
                              <div id="pie-mono-color-container" style="display: none;">
@@ -466,7 +477,7 @@
             const chartTypeSelectors = document.querySelectorAll('.chart-type-selector');
             const histogramOptions = document.getElementById('histogram-options');
             const pieChartOptions = document.getElementById('pie-chart-options');
-            const sentimentBarOptions = document.getElementById('sentiment-bar-options'); // NEW
+            const sentimentBarOptions = document.getElementById('sentiment-bar-options'); 
             const generateBtn = document.getElementById('generate-btn');
             const downloadBtn = document.getElementById('download-btn');
             const chartContainer = document.getElementById('chart-container');
@@ -490,6 +501,45 @@
             const shuffleVisualBtn = document.getElementById('shuffle-visual-btn');
 
             let activeVisualShuffleIndices = null;
+
+            // --- SOCIAL ICONS PATHS & COLORS ---
+            const SOCIAL_ICONS = {
+                x: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
+                facebook: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
+                instagram: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z",
+                tiktok: "M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93v6.16c0 2.52-1.12 4.84-2.91 6.35-1.78 1.51-4.19 2.16-6.42 1.71-2.05-.38-3.9-1.58-5.06-3.26-1.17-1.68-1.5-3.83-0.87-5.8 0.58-1.84 2.05-3.32 3.9-3.95 0.53-.19 1.09-.32 1.66-.37v4.06c-1.07.12-1.95.89-2.17 1.93-.21 1.03.35 2.07 1.29 2.57.94.51 2.11.3 2.89-.47.63-.61.98-1.47.98-2.35v-14.7h2.64z",
+                youtube: "M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z",
+                linkedin: "M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h5v-8.368c0-4.754 5.922-5.226 5.922 0v8.368h5v-9.319c0-6.17-6.936-6.059-8.498-3.08v-3.569h-2.456z",
+                web: "M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z M12 2.2C16.8 2.2 20.8 5.6 21.7 10h-5.2C16.1 7.1 15.2 4.6 14 2.5 13.4 2.3 12.7 2.2 12 2.2z M12 21.8c-0.7 0-1.4-0.1-2-0.3 1.2-2.1 2.1-4.6 2.5-7.5h5.2C16.8 18.4 12.8 21.8 12 21.8z M2.3 10h5.2c0.4-2.9 1.3-5.4 2.5-7.5 -0.6-0.2-1.3-0.3-2-0.3C4.2 2.2 0.2 5.6 2.3 10z M2.3 14c-2.1 4.4 1.9 7.8 5.7 7.8 0.7 0 1.4-0.1 2-0.3 -1.2-2.1-2.1-4.6-2.5-7.5H2.3z M12 12c0-0.7 0-1.4 0.1-2h4.8c0.1 0.6 0.1 1.3 0.1 2s0 1.4-0.1 2h-4.8C12 13.4 12 12.7 12 12z M9.9 10c0.1-0.7 0.1-1.3 0.1-2H7.1C7 8.6 7 9.3 7 10H9.9z M9.9 14H7.1c0 0.7 0 1.4 0.1 2h2.7C9.9 15.4 9.9 14.7 9.9 14z",
+                dots: "M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"
+            };
+
+            const ICON_COLORS = {
+                x: "#000000",
+                facebook: "#1877F2",
+                instagram: "#E1306C",
+                tiktok: "#000000",
+                youtube: "#FF0000",
+                linkedin: "#0A66C2",
+                web: "#5F6368",
+                dots: "#5F6368"
+            };
+
+            const getIconInfo = (rawLabel) => {
+                const l = rawLabel.toLowerCase().trim();
+                let key = null;
+                if (l === 'x' || l === 'twitter' || l.includes('twitter')) key = 'x';
+                else if (l.includes('facebook') || l === 'fb' || l === 'meta') key = 'facebook';
+                else if (l.includes('instagram') || l === 'ig') key = 'instagram';
+                else if (l.includes('tiktok')) key = 'tiktok';
+                else if (l.includes('youtube') || l === 'yt') key = 'youtube';
+                else if (l.includes('linkedin')) key = 'linkedin';
+                else if (l.includes('web') || l.includes('sito') || l.includes('news') || l.includes('online')) key = 'web';
+                else if (l.includes('altro') || l.includes('other') || l === '...') key = 'dots';
+                
+                if (key) return { path: SOCIAL_ICONS[key], color: ICON_COLORS[key] };
+                return null;
+            };
 
             const COLORS = {
                 titleBlue: '#0431AE', barBlue: '#bfd7fd', axisGray: '#7b7b7a', gridGray: '#e0e0e0',
@@ -561,7 +611,26 @@
             });
 
             const resetShuffle = () => { activeVisualShuffleIndices = null; };
-            dataPaste.addEventListener('input', resetShuffle);
+            
+            // --- SYNC FUNCTIONALITY ---
+            dataPaste.addEventListener('input', () => {
+                resetShuffle();
+                // Parse paste data and populate grid
+                const text = dataPaste.value.trim();
+                manualDataContainer.innerHTML = '';
+                if (text) {
+                    text.split('\n').forEach(line => {
+                        const parts = line.split('\t');
+                        let rawLabel = parts[0] || '';
+                        const value = parseItalianNumber(parts[1]);
+                        if (rawLabel || !isNaN(value)) {
+                            createDataRow(rawLabel, isNaN(value) ? '' : value);
+                        }
+                    });
+                } else {
+                     for (let i = 0; i < 5; i++) { createDataRow(); }
+                }
+            });
             
             const createDataRow = (label = '', value = '') => {
                 const rowDiv = document.createElement('div');
@@ -638,6 +707,11 @@
                     jsonData.forEach(row => {
                         if(row[0] || row[1]) { createDataRow(row[0] || '', row[1] || ''); }
                     });
+                    
+                    // Sync to paste area for consistency
+                    const text = jsonData.map(row => `${row[0] || ''}\t${row[1] || ''}`).join('\n');
+                    dataPaste.value = text;
+
                     activeVisualShuffleIndices = null; 
                     toggleManualBtn.click(); 
                 };
@@ -651,35 +725,21 @@
             }
 
             function parseData() {
-                const isPasteMode = pasteDataContainer.style.display !== 'none';
+                // Always read from manual data container as it is now synced
                 let data = [];
-                if (isPasteMode) {
-                    const text = dataPaste.value.trim();
-                    if (!text) return []; 
-                    data = text.split('\n').map(line => {
-                        const parts = line.split('\t');
-                        let rawLabel = parts[0] || '';
-                        const value = parseItalianNumber(parts[1]);
+                const dataRows = manualDataContainer.querySelectorAll('.data-row');
+                dataRows.forEach(row => {
+                    const rawLabel = row.querySelector('.data-label').value.trim();
+                    const valueStr = row.querySelector('.data-value').value;
+                    
+                    if (rawLabel && valueStr) {
+                        const value = parseFloat(valueStr) || 0;
                         const highlight = rawLabel.startsWith('*') && rawLabel.endsWith('*');
                         const cleanLabel = highlight ? rawLabel.substring(1, rawLabel.length - 1) : rawLabel;
                         const labelParts = cleanLabel.split('*');
-                        return { rawLabel, labelParts, value, highlight };
-                    }).filter(d => d.rawLabel && !isNaN(d.value));
-                } else {
-                    const dataRows = manualDataContainer.querySelectorAll('.data-row');
-                    dataRows.forEach(row => {
-                        const rawLabel = row.querySelector('.data-label').value.trim();
-                        const valueStr = row.querySelector('.data-value').value;
-                        
-                        if (rawLabel && valueStr) {
-                            const value = parseFloat(valueStr) || 0;
-                            const highlight = rawLabel.startsWith('*') && rawLabel.endsWith('*');
-                            const cleanLabel = highlight ? rawLabel.substring(1, rawLabel.length - 1) : rawLabel;
-                            const labelParts = cleanLabel.split('*');
-                            data.push({ rawLabel, labelParts, value, highlight });
-                        }
-                    });
-                }
+                        data.push({ rawLabel, labelParts, value, highlight });
+                    }
+                });
                 if (data.length === 0) return [];
                 return data;
             }
@@ -757,8 +817,9 @@
                             const selectedOption = colorSelect.options[colorSelect.selectedIndex];
                             const mainColor = selectedOption.dataset.main;
                             const highlightColor = selectedOption.dataset.highlight;
+                            const barPadding = parseFloat(document.getElementById('histogram-padding').value);
 
-                            drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor, hideValueAxis);
+                            drawHistogram(data, title, width, height, fontSizeX, fontSizeY, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor, hideValueAxis, barPadding);
 
                         } else if (chartType === 'pie') {
                             const isDonut = document.getElementById('pie-donut-toggle').checked;
@@ -801,12 +862,45 @@
                 const titleGroup = svg.append('g').attr('transform', `translate(30, 20)`);
                 titleGroup.append('text').attr('x', 0).attr('y', 0).attr('dy', '0.8em').attr('font-family', 'Nunito Sans, sans-serif').attr('font-size', `${fontSize}px`).attr('font-weight', '700').attr('fill', COLORS.titleBlue).text(title);
                 titleGroup.append('line').attr('x1', 0).attr('x2', 400).attr('y1', fontSize * 1.1).attr('y2', fontSize * 1.1).attr('stroke', COLORS.titleBlue).attr('stroke-width', 2);
-                return fontSize * 1.5 + 40; // Ritorna l'altezza occupata
+                return fontSize * 1.5 + 40; 
+            }
+            
+            const getSentimentColor = (label) => {
+                const l = label.toLowerCase().trim();
+                if (l.includes('positivo') || l.includes('positive')) return COLORS.sentiment.positive;
+                if (l.includes('neutro') || l.includes('neutral') || l.includes('misto')) return COLORS.sentiment.neutral;
+                if (l.includes('negativo') || l.includes('negative')) return COLORS.sentiment.negative;
+                return COLORS.sentiment.default;
+            };
+            
+            function drawSentimentLegend(svg, processedData, y, labelFontSize, decimals, containerWidth) {
+                // Crea un gruppo temporaneo per calcolare la larghezza totale
+                const tempGroup = svg.append('g').attr('visibility', 'hidden');
+                let totalWidth = 0;
+                
+                processedData.forEach(d => {
+                    tempGroup.append('circle').attr('cx', totalWidth + 5).attr('cy', 5).attr('r', 6).attr('fill', d.color);
+                    const textEl = tempGroup.append('text').attr('x', totalWidth + 18).attr('y', 10).text(`${d.rawLabel} (${itLocale.format(`.${decimals}f`)(d.pct * 100)}%)`).attr('font-size', `${labelFontSize}px`).attr('font-weight', '600');
+                    const bbox = textEl.node().getBBox();
+                    totalWidth += bbox.width + 35; // 35 padding tra items
+                });
+                totalWidth -= 20; // rimuovi padding extra finale
+                tempGroup.remove();
+
+                // Calcola Start X per centrare
+                const startX = (containerWidth - totalWidth) / 2;
+
+                const legendGroup = svg.append('g').attr('transform', `translate(${startX}, ${y})`);
+                let legendX = 0;
+                processedData.forEach(d => {
+                    legendGroup.append('circle').attr('cx', legendX + 5).attr('cy', 5).attr('r', 6).attr('fill', d.color);
+                    const textEl = legendGroup.append('text').attr('x', legendX + 18).attr('y', 10).text(`${d.rawLabel} (${itLocale.format(`.${decimals}f`)(d.pct * 100)}%)`).attr('font-size', `${labelFontSize}px`).attr('fill', '#444').attr('font-weight', '600');
+                    const bbox = textEl.node().getBBox();
+                    legendX += bbox.width + 35; 
+                });
             }
 
-            // --- NUOVA FUNZIONE: BARRA SENTIMENT (Modificata v3) ---
             function drawSentimentBar(data, title, hideTitle, fontSizeTitle, width, barHeight, decimals, labelFontSize) {
-                // Stima altezza
                 let currentY = hideTitle ? 20 : 100;
                 const legendPadding = 40;
                 const totalHeight = currentY + barHeight + legendPadding + 50; 
@@ -821,25 +915,11 @@
                 const titleOccupiedHeight = drawCommonTitle(svg, title, hideTitle, fontSizeTitle);
                 currentY = hideTitle ? 30 : titleOccupiedHeight + 10;
 
-                const getSentimentColor = (label) => {
-                    const l = label.toLowerCase().trim();
-                    if (l.includes('positivo') || l.includes('positive')) return COLORS.sentiment.positive;
-                    if (l.includes('neutro') || l.includes('neutral') || l.includes('misto')) return COLORS.sentiment.neutral;
-                    if (l.includes('negativo') || l.includes('negative')) return COLORS.sentiment.negative;
-                    return COLORS.sentiment.default;
-                };
-
                 const totalVal = d3.sum(data, d => d.value);
                 let cumulative = 0;
                 const processedData = data.map(d => {
                     const pct = (d.value / totalVal);
-                    const item = {
-                        ...d,
-                        color: getSentimentColor(d.rawLabel),
-                        pct: pct,
-                        start: cumulative,
-                        width: pct 
-                    };
+                    const item = { ...d, color: getSentimentColor(d.rawLabel), pct: pct, start: cumulative, width: pct };
                     cumulative += pct;
                     return item;
                 });
@@ -847,77 +927,37 @@
                 const marginX = 30;
                 const chartWidth = width - (marginX * 2);
                 
-                // 1. Disegno Barra
                 const barGroup = svg.append('g').attr('transform', `translate(${marginX}, ${currentY})`);
                 const xScale = d3.scaleLinear().domain([0, 1]).range([0, chartWidth]);
 
                 processedData.forEach((d, i) => {
                     const rectWidth = xScale(d.width);
                     const xPos = xScale(d.start);
-                    
                     const isFirst = i === 0;
                     const isLast = i === processedData.length - 1;
-                    const radius = barHeight / 2; 
-                    
-                    const path = d3.path();
                     const r = 8; 
                     const w = rectWidth;
                     const h = barHeight;
                     
+                    const path = d3.path();
                     path.moveTo(isFirst ? r : 0, 0);
                     path.lineTo(isLast ? w - r : w, 0);
-                    if (isLast) path.arc(w - r, r, r, -Math.PI/2, 0);
-                    else path.lineTo(w, 0);
-                    
+                    if (isLast) path.arc(w - r, r, r, -Math.PI/2, 0); else path.lineTo(w, 0);
                     path.lineTo(w, isLast ? h - r : h);
-                    if (isLast) path.arc(w - r, h - r, r, 0, Math.PI/2);
-                    else path.lineTo(w, h);
-                    
+                    if (isLast) path.arc(w - r, h - r, r, 0, Math.PI/2); else path.lineTo(w, h);
                     path.lineTo(isFirst ? r : 0, h);
-                    if (isFirst) path.arc(r, h - r, r, Math.PI/2, Math.PI);
-                    else path.lineTo(0, h);
-                    
+                    if (isFirst) path.arc(r, h - r, r, Math.PI/2, Math.PI); else path.lineTo(0, h);
                     path.lineTo(0, isFirst ? r : 0);
                     if (isFirst) path.arc(r, r, r, Math.PI, -Math.PI/2);
-                    
                     path.closePath();
 
-                    barGroup.append('path')
-                        .attr('d', path.toString())
-                        .attr('transform', `translate(${xPos}, 0)`)
-                        .attr('fill', d.color)
-                        .attr('stroke', 'white')
-                        .attr('stroke-width', 1);
+                    barGroup.append('path').attr('d', path.toString()).attr('transform', `translate(${xPos}, 0)`).attr('fill', d.color).attr('stroke', 'white').attr('stroke-width', 1);
                 });
 
-                // 2. Disegno Etichette SOTTO la barra
-                const legendY = currentY + barHeight + 20; // Spazio sotto la barra
-                const legendGroup = svg.append('g').attr('transform', `translate(${marginX}, ${legendY})`);
-                let legendX = 0;
-                
-                processedData.forEach(d => {
-                    // Pallino
-                    legendGroup.append('circle')
-                        .attr('cx', legendX + 5)
-                        .attr('cy', 5) // Centrato rispetto al testo circa
-                        .attr('r', 6)
-                        .attr('fill', d.color);
-                    
-                    // Testo
-                    const textEl = legendGroup.append('text')
-                        .attr('x', legendX + 18)
-                        .attr('y', 10)
-                        .text(`${d.rawLabel} (${itLocale.format(`.${decimals}f`)(d.pct * 100)}%)`) 
-                        .attr('font-size', `${labelFontSize}px`)
-                        .attr('fill', '#444')
-                        .attr('font-weight', '600');
-                    
-                    const bbox = textEl.node().getBBox();
-                    legendX += bbox.width + 35; // Spazio tra elementi
-                });
+                drawSentimentLegend(svg, processedData, currentY + barHeight + 20, labelFontSize, decimals, width);
             }
 
-            function drawHistogram(data, title, width, height, fontSizeAxis, fontSizeValues, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor, hideValueAxis) {
+            function drawHistogram(data, title, width, height, fontSizeAxis, fontSizeValues, hideTitle, fontSizeTitle, orientation, mainColor, highlightColor, hideValueAxis, barPadding) {
                 const addBlueOutline = document.getElementById('histogram-color-scheme').value === 'yellow' && document.getElementById('histogram-yellow-outline').checked;
                 const numDecimals = +document.getElementById('histogram-decimals').value;
                 const labelWeight = document.getElementById('histogram-label-weight').value;
@@ -926,6 +966,7 @@
                 const titleHeight = drawCommonTitle(svg, title, hideTitle, fontSizeTitle);
                 
                 if (orientation === 'horizontal') {
+                    // --- HORIZONTAL BAR CHART ---
                     const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
                     const dynamicLeftMargin = Math.max(100, longestLabel.length * (fontSizeAxis * 0.6));
                     const bottomMargin = hideValueAxis ? 20 : 40; 
@@ -933,8 +974,9 @@
                     const innerWidth = width - margin.left - margin.right;
                     const innerHeight = height - margin.top - margin.bottom;
                     if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente. Aumenta larghezza/altezza.");
+                    
                     const chartGroup = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
-                    const y = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerHeight]).padding(0.4);
+                    const y = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerHeight]).padding(barPadding);
                     const x = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([0, innerWidth]);
                     
                     const ticks = x.ticks(5);
@@ -965,15 +1007,20 @@
                     
                     chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("y", d => y(d.rawLabel)).attr("x", 0).attr("height", y.bandwidth()).attr("width", d => x(d.value)).attr("fill", d => d.highlight ? highlightColor : mainColor).attr("stroke", addBlueOutline ? COLORS.titleBlue : 'none').attr("stroke-width", addBlueOutline ? 1 : 0);
                     chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("y", d => y(d.rawLabel) + y.bandwidth() / 2).attr("x", d => x(d.value) + 5).attr("dy", "0.35em").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", labelWeight).text(d => formatItalianNumber(d.value, numDecimals));
+                
                 } else { 
-                    const longestLabel = data.reduce((a, b) => a.rawLabel.length > b.rawLabel.length ? a : b, { rawLabel: '' }).rawLabel;
-                    const dynamicBottomMargin = Math.max(80, longestLabel.length * fontSizeAxis * 0.55);
-                    const margin = { top: titleHeight || 20, right: 30, bottom: dynamicBottomMargin, left: 60 };
+                    // --- VERTICAL HISTOGRAM ---
+                    const hasIcons = data.some(d => getIconInfo(d.rawLabel) !== null);
+                    const axisPadding = hasIcons ? 60 : 30; // Spazio extra per icone
+                    
+                    const margin = { top: titleHeight || 20, right: 30, bottom: 80 + axisPadding, left: 60 };
                     const innerWidth = width - margin.left - margin.right;
                     const innerHeight = height - margin.top - margin.bottom;
+                    
                     if (innerWidth <= 0 || innerHeight <= 0) throw new Error("Spazio insufficiente.");
+                    
                     const chartGroup = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
-                    const x = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerWidth]).padding(0.4);
+                    const x = d3.scaleBand().domain(data.map(d => d.rawLabel)).range([0, innerWidth]).padding(barPadding);
                     const y = d3.scaleLinear().domain([0, d3.max(data, d => d.value) * 1.1 || 1]).range([innerHeight, 0]);
                     
                     const ticks = y.ticks(5);
@@ -984,17 +1031,62 @@
                     const grid = chartGroup.append("g").attr("class", "grid").call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat(""));
                     grid.select(".domain").remove();
                     grid.selectAll("line").attr("stroke", COLORS.gridGray).attr("stroke-width", 0.5);
-                    const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).tickSize(0));
-                    xAxis.select(".domain").remove();
-                    xAxis.selectAll(".tick text").text(null).each(function(d) {
-                        const dataPoint = data.find(item => item.rawLabel === d);
-                        const labelParts = dataPoint ? dataPoint.labelParts : [d];
-                        d3.select(this).selectAll("tspan").data(labelParts).enter().append("tspan").attr("x", 0).attr("dy", (d, i) => i === 0 ? 0 : "1.2em").text(d => d);
-                    });
-                    xAxis.selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-45)").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+                    
                     const yAxis = chartGroup.append("g").call(d3.axisLeft(y).ticks(5).tickSize(0).tickFormat(axisTickFormatter));
                     yAxis.select(".domain").remove();
                     yAxis.selectAll("text").style("font-size", `${fontSizeAxis}px`).style("fill", COLORS.axisGray);
+
+                    // X AXIS - CHECK GLOBAL ROTATION
+                    const xAxis = chartGroup.append("g").attr("transform", `translate(0, ${innerHeight})`).call(d3.axisBottom(x).tickSize(0));
+                    xAxis.select(".domain").remove();
+                    
+                    // Logic: Check IF ANY label exceeds width. If so, ALL rotate.
+                    let shouldRotateAll = false;
+                    const bandWidth = x.bandwidth();
+
+                    xAxis.selectAll(".tick text").each(function(d) {
+                         // Measure theoretical width (no icons yet)
+                         const tempText = svg.append("text").text(d).style("font-size", `${fontSizeAxis}px`);
+                         const w = tempText.node().getComputedTextLength();
+                         tempText.remove();
+                         if (w > bandWidth + 5) shouldRotateAll = true;
+                    });
+
+                    // RENDER LABELS & ICONS
+                    xAxis.selectAll(".tick").each(function(d) {
+                        const g = d3.select(this);
+                        g.selectAll("*").remove(); 
+                        
+                        const iconInfo = getIconInfo(d);
+                        let textY = 25;
+                        
+                        // 1. Draw Icon
+                        if (iconInfo) {
+                            g.append("path")
+                                .attr("d", iconInfo.path)
+                                .attr("transform", `translate(-10, 10) scale(0.8)`) // Smaller scale, shifted
+                                .attr("fill", iconInfo.color); 
+                            textY = 55; // More space between icon and text
+                        }
+
+                        // 2. Draw Text
+                        const textElement = g.append("text")
+                            .style("font-size", `${fontSizeAxis}px`)
+                            .style("fill", COLORS.axisGray)
+                            .style("text-anchor", "middle")
+                            .text(d);
+                        
+                        if (shouldRotateAll) {
+                             textElement
+                                .attr("transform", `translate(0, ${textY}) rotate(-45)`)
+                                .style("text-anchor", "end")
+                                .attr("dy", "0.5em")
+                                .attr("dx", "-0.5em");
+                        } else {
+                             textElement.attr("y", textY);
+                        }
+                    });
+
                     chartGroup.selectAll(".bar").data(data).enter().append("rect").attr("class", "bar").attr("x", d => x(d.rawLabel)).attr("y", d => y(d.value)).attr("width", x.bandwidth()).attr("height", d => innerHeight - y(d.value)).attr("fill", d => d.highlight ? highlightColor : mainColor).attr("stroke", addBlueOutline ? COLORS.titleBlue : 'none').attr("stroke-width", addBlueOutline ? 1 : 0);
                     chartGroup.selectAll(".bar-label").data(data).enter().append("text").attr("class", "bar-label").attr("x", d => x(d.rawLabel) + x.bandwidth() / 2).attr("y", d => y(d.value) - 5).attr("text-anchor", "middle").style("font-size", `${fontSizeValues}px`).style("fill", COLORS.titleBlue).style("font-weight", labelWeight).text(d => formatItalianNumber(d.value, numDecimals));
                 }
@@ -1002,53 +1094,45 @@
             
             function drawPieChart(data, title, hideTitle, fontSizeTitle, options) {
                 const { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels } = options;
-                
                 const labelWeight = document.getElementById('pie-label-weight').value;
                 const labelColorChoice = document.getElementById('pie-label-color').value;
                 const finalLabelColor = labelColorChoice === 'gray' ? COLORS.labelGray : COLORS.titleBlue;
 
                 d3.select("#chart-container").html("");
-                const canvasWidth = 800, canvasHeight = 1100; 
-                const radius = 210;
+                const canvasWidth = 800;
+                const isSentimentMode = colorSchemeType === 'sentiment';
+                const canvasHeight = isSentimentMode ? 700 : 1100; 
+
+                const radius = isSentimentMode ? 180 : 210;
                 const svgContainer = d3.select("#chart-container").append("svg").attr("width", "100%").attr("height", "100%").attr("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`).attr('preserveAspectRatio', 'xMidYMin meet'); 
                 drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
                 
-                const pieGroup = svgContainer.append('g').attr('transform', `translate(${canvasWidth / 2}, ${canvasHeight / 2 + 20})`);
+                const centerY = isSentimentMode ? (canvasHeight / 2) - 50 : (canvasHeight / 2) + 20;
+                const pieGroup = svgContainer.append('g').attr('transform', `translate(${canvasWidth / 2}, ${centerY})`);
                 
                 let sortedData = [...data];
-                if (smartSort && activeVisualShuffleIndices === null) {
-                    const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
-                    const reordered = [];
-                    let start = 0;
-                    let end = tempSorted.length - 1;
+                if (smartSort && activeVisualShuffleIndices === null && !isSentimentMode) {
+                   const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
+                   const reordered = [];
+                    let start = 0; let end = tempSorted.length - 1;
                     while(start <= end) {
                         if (start === end) reordered.push(tempSorted[start]);
-                        else {
-                            reordered.push(tempSorted[start]); 
-                            reordered.push(tempSorted[end]);
-                        }
-                        start++;
-                        end--;
+                        else { reordered.push(tempSorted[start]); reordered.push(tempSorted[end]); }
+                        start++; end--;
                     }
                     sortedData = reordered;
                 }
 
                 let colorSchemeOrScale;
                 if (colorSchemeType === 'sentiment') {
-                    const colorMap = new Map(data.map(d => {
-                        const labelLower = d.labelParts.join(' ').toLowerCase();
-                        if (labelLower.includes('positivo') || labelLower.includes('positive')) return [d.rawLabel, COLORS.sentiment.positive];
-                        if (labelLower.includes('neutro') || labelLower.includes('neutral')) return [d.rawLabel, COLORS.sentiment.neutral];
-                        if (labelLower.includes('negativo') || labelLower.includes('negative')) return [d.rawLabel, COLORS.sentiment.negative];
-                        return [d.rawLabel, COLORS.sentiment.default];
-                    }));
-                    colorSchemeOrScale = sortedData.map(d => colorMap.get(d.rawLabel));
+                     colorSchemeOrScale = (val, index) => getSentimentColor(sortedData[index].rawLabel);
                 } else if (colorSchemeType === 'two') {
                     const twoColorSelect = document.getElementById('pie-two-color-scheme');
                     const selectedOption = twoColorSelect.options[twoColorSelect.selectedIndex];
                     const mainColor = selectedOption.dataset.main;
                     const highlightColor = selectedOption.dataset.highlight;
-                    colorSchemeOrScale = invertTwoColors ? [highlightColor, mainColor] : [mainColor, highlightColor];
+                    const colors = invertTwoColors ? [highlightColor, mainColor] : [mainColor, highlightColor];
+                    colorSchemeOrScale = colors;
                 } else if (colorSchemeType === 'mono') {
                     colorSchemeOrScale = () => document.getElementById('pie-mono-color').value;
                 } else {
@@ -1062,10 +1146,27 @@
                 const pie = d3.pie().value(d => d.value).sort(null); 
                 const data_ready = pie(sortedData);
                 const arc = d3.arc().innerRadius(innerRadius).outerRadius(radius);
+                
+                pieGroup.selectAll('path').data(data_ready).join('path')
+                    .attr('d', arc)
+                    .attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.value, i) : colorSchemeOrScale[i % colorSchemeOrScale.length])
+                    .style('stroke', 'white').style('stroke-width', '3px');
+                
+                // SE SENTIMENT MODE: Disegna Legenda
+                if (isSentimentMode) {
+                    const totalVal = d3.sum(data, d => d.value);
+                    const processedData = sortedData.map(d => ({
+                        ...d,
+                        color: getSentimentColor(d.rawLabel),
+                        pct: d.value / totalVal
+                    }));
+                    // Disegna legenda sotto
+                    drawSentimentLegend(svgContainer, processedData, centerY + radius + 80, 20, decimalPlaces, canvasWidth);
+                    return; 
+                }
+
+                // Standard Labels (Callouts)
                 const outerArc = d3.arc().innerRadius(radius * 1.1).outerRadius(radius * 1.1);
-                
-                pieGroup.selectAll('path').data(data_ready).join('path').attr('d', arc).attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.data.value) : colorSchemeOrScale[i % colorSchemeOrScale.length]).style('stroke', 'white').style('stroke-width', '3px');
-                
                 const baseTextRadius = radius * 1.15;
                 const farTextRadius = radius * 1.45;
                 const minDistance = pieFontSizeLabels + 6; 
@@ -1075,55 +1176,25 @@
                     const posOuter = outerArc.centroid(d);
                     const isRight = (midAngle < Math.PI);
                     return {
-                        d: d,
-                        midAngle: midAngle,
-                        y: posOuter[1],
-                        xSign: isRight ? 1 : -1,
-                        isRight: isRight,
-                        radius: baseTextRadius, 
-                        staggered: false
+                        d: d, midAngle: midAngle, y: posOuter[1], xSign: isRight ? 1 : -1, isRight: isRight,
+                        radius: baseTextRadius, staggered: false
                     };
                 });
 
                 const relaxLabels = (items) => {
                     items.sort((a, b) => a.y - b.y);
-                    let iterations = 0;
-                    let changed = true;
-                    
+                    let iterations = 0; let changed = true;
                     while (changed && iterations < 50) {
-                        changed = false;
-                        iterations++;
-                        
+                        changed = false; iterations++;
                         for (let i = 0; i < items.length - 1; i++) {
-                            const a = items[i];
-                            const b = items[i + 1];
+                            const a = items[i]; const b = items[i + 1];
                             const dist = b.y - a.y;
-                            
                             if (dist < minDistance) {
-                                const overlap = minDistance - dist;
-                                const move = overlap / 2;
-                                a.y -= move;
-                                b.y += move;
-                                changed = true;
+                                const overlap = minDistance - dist; const move = overlap / 2;
+                                a.y -= move; b.y += move; changed = true;
                                 if (!a.staggered && !b.staggered && dist < minDistance * 0.8) {
-                                    b.radius = farTextRadius; 
-                                    b.staggered = true;
+                                    b.radius = farTextRadius; b.staggered = true;
                                 }
-                            }
-                        }
-                        const topLimit = - (canvasHeight / 2) + 40; 
-                        const bottomLimit = (canvasHeight / 2) - 40;
-
-                        if (items.length > 0) {
-                            if (items[0].y < topLimit) {
-                                const diff = topLimit - items[0].y;
-                                items.forEach(item => item.y += diff); 
-                                changed = true;
-                            }
-                            if (items[items.length - 1].y > bottomLimit) {
-                                const diff = items[items.length - 1].y - bottomLimit;
-                                items.forEach(item => item.y -= diff);
-                                changed = true;
                             }
                         }
                     }
@@ -1132,22 +1203,15 @@
                 relaxLabels(labels.filter(d => d.isRight));
                 relaxLabels(labels.filter(d => !d.isRight));
 
-                pieGroup.selectAll('polyline')
-                    .data(labels)
-                    .join('polyline')
+                pieGroup.selectAll('polyline').data(labels).join('polyline')
                     .attr('points', d => {
                         const start = arc.centroid(d.d);
                         const breakPoint = outerArc.centroid(d.d);
                         const endX = d.radius * d.xSign;
                         return [start, breakPoint, [endX, d.y]];
-                    })
-                    .style('fill', 'none')
-                    .attr('stroke', '#444')
-                    .attr('stroke-width', 1);
+                    }).style('fill', 'none').attr('stroke', '#444').attr('stroke-width', 1);
 
-                pieGroup.selectAll('text')
-                    .data(labels)
-                    .join('text')
+                pieGroup.selectAll('text').data(labels).join('text')
                     .attr('transform', d => `translate(${ (d.radius + 10) * d.xSign }, ${d.y})`)
                     .style('text-anchor', d => d.isRight ? 'start' : 'end')
                     .each(function(d) {
@@ -1164,22 +1228,11 @@
                         const startDy = -((linesCount * lineHeight) / 2) + 0.8; 
 
                         dataItem.labelParts.forEach((part, i) => {
-                            el.append('tspan')
-                                .attr('x', 0)
-                                .attr('dy', i === 0 ? `${startDy}em` : `${lineHeight}em`)
-                                .text(part)
-                                .style('font-size', `${pieFontSizeLabels}px`)
-                                .style('font-weight', labelWeight)
-                                .style('fill', finalLabelColor);
+                            el.append('tspan').attr('x', 0).attr('dy', i === 0 ? `${startDy}em` : `${lineHeight}em`)
+                                .text(part).style('font-size', `${pieFontSizeLabels}px`).style('font-weight', labelWeight).style('fill', finalLabelColor);
                         });
-                        
-                        el.append('tspan')
-                            .attr('x', 0)
-                            .attr('dy', `${lineHeight}em`)
-                            .text(labelValue)
-                            .style('font-size', `${pieFontSizeLabels - 2}px`)
-                            .style('font-weight', labelWeight)
-                            .style('fill', finalLabelColor);
+                        el.append('tspan').attr('x', 0).attr('dy', `${lineHeight}em`).text(labelValue)
+                            .style('font-size', `${pieFontSizeLabels - 2}px`).style('font-weight', labelWeight).style('fill', finalLabelColor);
                     });
             }
 
@@ -1215,6 +1268,8 @@
                 if (settings.manualData) {
                     manualDataContainer.innerHTML = '';
                     settings.manualData.forEach(row => createDataRow(row.label, row.value));
+                     const text = settings.manualData.map(row => `${row.label || ''}\t${row.value || ''}`).join('\n');
+                     dataPaste.value = text;
                 }
                 styleColorSelector('histogram-color-scheme');
                 styleColorSelector('pie-two-color-scheme');
