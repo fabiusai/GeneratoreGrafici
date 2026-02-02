@@ -689,6 +689,26 @@
                 pieTwoColorContainer.style.display = scheme === 'two' ? 'block' : 'none';
                 document.getElementById('pie-smart-sort-container').style.display = ['multi', 'mono'].includes(scheme) ? 'flex' : 'none';
                 document.getElementById('pie-shuffle-colors-container').style.display = scheme === 'multi' ? 'flex' : 'none';
+
+                // --- PATCH: Inject Sentiment Style Selector Dynamically ---
+                let sentimentStyleContainer = document.getElementById('pie-sentiment-style-container');
+                if (!sentimentStyleContainer) {
+                    sentimentStyleContainer = document.createElement('div');
+                    sentimentStyleContainer.id = 'pie-sentiment-style-container';
+                    sentimentStyleContainer.style.display = 'none';
+                    sentimentStyleContainer.className = 'mt-4';
+                    sentimentStyleContainer.innerHTML = `
+                        <label class="block text-sm font-medium text-gray-700">Stile Sentiment</label>
+                        <select id="pie-sentiment-style" class="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <option value="legend" selected>Legenda (in basso)</option>
+                            <option value="callout">Etichette (Callout)</option>
+                        </select>
+                    `;
+                    // Inserisce dopo il container "Colori"
+                    pieColorScheme.closest('div').insertAdjacentElement('afterend', sentimentStyleContainer);
+                }
+                sentimentStyleContainer.style.display = scheme === 'sentiment' ? 'block' : 'none';
+                // ---------------------------------------------------------
             });
 
             fileUpload.addEventListener('change', (event) => {
@@ -832,11 +852,14 @@
                             const decimalPlaces = +document.getElementById('pie-decimals').value;
                             const pieFontSizeLabels = +document.getElementById('pie-font-size-labels').value;
                             
+                            // Lettura nuovo stile Sentiment
+                            const sentimentStyle = document.getElementById('pie-sentiment-style') ? document.getElementById('pie-sentiment-style').value : 'legend';
+
                             let renderData = [...data];
                             if (activeVisualShuffleIndices && activeVisualShuffleIndices.length === renderData.length) {
                                 renderData = activeVisualShuffleIndices.map(i => data[i]);
                             }
-                            drawPieChart(renderData, title, hideTitle, fontSizeTitle, { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels });
+                            drawPieChart(renderData, title, hideTitle, fontSizeTitle, { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels, sentimentStyle });
 
                         } else if (chartType === 'sentiment_bar') {
                             const width = +document.getElementById('sentiment-width').value;
@@ -1093,25 +1116,29 @@
             }
             
             function drawPieChart(data, title, hideTitle, fontSizeTitle, options) {
-                const { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels } = options;
+                const { isDonut, donutSize, colorSchemeType, smartSort, shuffleColors, invertTwoColors, labelFormat, decimalPlaces, pieFontSizeLabels, sentimentStyle } = options;
                 const labelWeight = document.getElementById('pie-label-weight').value;
                 const labelColorChoice = document.getElementById('pie-label-color').value;
                 const finalLabelColor = labelColorChoice === 'gray' ? COLORS.labelGray : COLORS.titleBlue;
 
                 d3.select("#chart-container").html("");
                 const canvasWidth = 800;
-                const isSentimentMode = colorSchemeType === 'sentiment';
-                const canvasHeight = isSentimentMode ? 700 : 1100; 
+                // Calcola modalità Sentiment reale: Solo se sentiment è attivo AND l'utente ha scelto 'legend' (default). 
+                // Se ha scelto callout, trattiamo il layout come un grafico normale (più alto, raggio maggiore).
+                const isSentimentLegendMode = colorSchemeType === 'sentiment' && sentimentStyle !== 'callout';
+                const canvasHeight = isSentimentLegendMode ? 700 : 1100; 
 
-                const radius = isSentimentMode ? 180 : 210;
+                const radius = isSentimentLegendMode ? 180 : 210;
                 const svgContainer = d3.select("#chart-container").append("svg").attr("width", "100%").attr("height", "100%").attr("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`).attr('preserveAspectRatio', 'xMidYMin meet'); 
                 drawCommonTitle(svgContainer, title, hideTitle, fontSizeTitle);
                 
-                const centerY = isSentimentMode ? (canvasHeight / 2) - 50 : (canvasHeight / 2) + 20;
+                const centerY = isSentimentLegendMode ? (canvasHeight / 2) - 50 : (canvasHeight / 2) + 20;
                 const pieGroup = svgContainer.append('g').attr('transform', `translate(${canvasWidth / 2}, ${centerY})`);
                 
                 let sortedData = [...data];
-                if (smartSort && activeVisualShuffleIndices === null && !isSentimentMode) {
+                // Smart sort attivo solo se NON è modalità sentiment classica (che richiede ordine specifico o colori fissi)
+                // Se siamo in Sentiment Callout, possiamo voler mantenere l'ordine o no? Solitamente sentiment è Pos/Neu/Neg. Meglio non riordinare random.
+                if (smartSort && activeVisualShuffleIndices === null && colorSchemeType !== 'sentiment') {
                    const tempSorted = [...sortedData].sort((a, b) => b.value - a.value);
                    const reordered = [];
                     let start = 0; let end = tempSorted.length - 1;
@@ -1152,8 +1179,8 @@
                     .attr('fill', (d, i) => typeof colorSchemeOrScale === 'function' ? colorSchemeOrScale(d.value, i) : colorSchemeOrScale[i % colorSchemeOrScale.length])
                     .style('stroke', 'white').style('stroke-width', '3px');
                 
-                // SE SENTIMENT MODE: Disegna Legenda
-                if (isSentimentMode) {
+                // SE SENTIMENT MODE CLASSICA (LEGENDA):
+                if (isSentimentLegendMode) {
                     const totalVal = d3.sum(data, d => d.value);
                     const processedData = sortedData.map(d => ({
                         ...d,
@@ -1165,7 +1192,7 @@
                     return; 
                 }
 
-                // Standard Labels (Callouts)
+                // Standard Labels (Callouts) - Ora usato anche per Sentiment se "Callout" è selezionato
                 const outerArc = d3.arc().innerRadius(radius * 1.1).outerRadius(radius * 1.1);
                 const baseTextRadius = radius * 1.15;
                 const farTextRadius = radius * 1.45;
